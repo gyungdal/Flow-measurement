@@ -1,5 +1,21 @@
 #include "storage.h"
 
+void setup_eeprom(){
+    if(EEPROM.read(0) != 0x00){
+        for(int i = 0;i<EEPROM.length();i++){
+            EEPROM.write(i, 0);
+        }
+    }
+}
+
+inline size_t get_eeprom_data_length(){
+    size_t index = 0;
+    
+    while(EEPROM.read(index * 8) != 0)
+        index++;
+    
+    return index;
+}
 
 inline eeprom_data_item_t get_eeprom_data_item(int index){
     eeprom_data_item_t item;
@@ -15,7 +31,7 @@ inline eeprom_data_item_t get_eeprom_data_item(int index){
     
     memcpy(&item, temp, sizeof(eeprom_data_item_t));
     
-    delete temp;
+    delete[] temp;
 
     return item;
 }
@@ -25,8 +41,9 @@ eeprom_data_list_t get_eeprom_data_list(){
     uint8_t* data = new uint8_t[sizeof(eeprom_data_item_t)];
     eeprom_data_item_t item;
     while((item = get_eeprom_data_item(result.length) != nullptr){
-        ++result.length;
-        realloc(result.items, sizeof(eeprom_data_item_t) * result.length + 1);
+        result.length += 1;
+        realloc(result.items, sizeof(eeprom_data_item_t) * (result.length + 1));
+        memcpy(&result.items[result.length], item, sizeof(eeprom_data_item_t));
     }
     return result;
 }
@@ -39,10 +56,21 @@ inline void set_eeprom_data_item(int index, eeprom_data_item_t item){
     for(uint8_t i = 0;i<sizeof(eeprom_data_item_t);i++){
         EEPROM.write(offset + i, bytes[i]);
     }
+    delete[] bytes;
 }
 
 void set_eeprom_data_list(eeprom_data_list_t items){
     for(uint8_t i = 0;i<items.length;i++){
         set_eeprom_data_item(i, items[i]);
     }
+}
+
+
+void release_eeprom_list(eeprom_data_list_t list){
+    delete[] list.items;
+    delete &list;
+}
+
+void release_eeprom_item(eeprom_data_item_t item){
+    delete item;
 }

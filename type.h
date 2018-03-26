@@ -26,6 +26,7 @@ typedef struct {
 } eeprom_liquid_amount_t;
 
 typedef struct {
+    uint8_t index;
     eeprom_time_t time;
     eeprom_liquid_amount_t amount;
 } eeprom_data_item_t;
@@ -34,9 +35,13 @@ typedef struct {
     uint8_t length;
     eeprom_data_list_t* items;
     inline eeprom_data_list_t operator[](const int index){
-        return items[index];
+        if(index >= length)
+            return nullptr;
+        else
+            return items[index];
     };
 } eeprom_data_list_t;
 
 eeprom_liquid_amount_t literToAmount(double);
+
 #endif
