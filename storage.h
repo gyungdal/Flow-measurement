@@ -7,6 +7,8 @@
 
 #include "type.h"
 
+void setup_eeprom();
+
 inline size_t get_eeprom_data_length();
 inline eeprom_data_item_t get_eeprom_data_item(int);
 eeprom_data_list_t get_eeprom_data_list();

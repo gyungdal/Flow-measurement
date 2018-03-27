@@ -7,6 +7,8 @@ extern "C" {
 
 // 사용처_뭐에 대한_t
 
+const uint8_t EEPROM_XOR_VALUE = 0x55;
+
 typedef struct {
     uint16_t year;    
 
