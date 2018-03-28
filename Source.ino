@@ -1,6 +1,5 @@
-#include <type.h>
 #include <Arduino.h>
-
+/*
 #include <Wire.h>
 #include <DS3231.h>
 
@@ -12,6 +11,7 @@ double liter;
 
 void setup(){
     Serial.begin(115200);
+    
     clock.begin();
 
     clock.armAlarm1(false);
@@ -26,7 +26,21 @@ void setup(){
 void loop(){
     //One Day
     if(clock.isAlarm2()){
-        
+
         liter = 0;        
     }
+}
+*/
+#include "test.h"
+
+Test test;
+
+void setup(){
+    Serial.begin(115200);
+}
+
+void loop(){
+    test.eeprom();    
+    delay(1000);
+
 }

@@ -1,3 +1,4 @@
+#ifdef __VIEWER_H__
 #include "viewer.h"
 
 
@@ -9,9 +10,12 @@ Viewer::Viewer(): width(128), height(64) {
 }
 
 
+
 Viewer::~Viewer() {
     for(size_t i = 0;i<this->width;i++){
         delete[] frameBuffer[i];
     }
     delete[] frameBuffer;
 }
+
+#endif

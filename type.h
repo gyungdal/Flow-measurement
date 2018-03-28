@@ -7,8 +7,6 @@ extern "C" {
 
 // 사용처_뭐에 대한_t
 
-const uint8_t EEPROM_XOR_VALUE = 0x55;
-
 typedef struct {
     uint16_t year;    
 
@@ -35,12 +33,9 @@ typedef struct {
 
 typedef struct {
     uint8_t length;
-    eeprom_data_list_t* items;
-    inline eeprom_data_list_t operator[](const int index){
-        if(index >= length)
-            return nullptr;
-        else
-            return items[index];
+    eeprom_data_item_t* items;
+    inline eeprom_data_item_t operator[](const int index){
+        return items[index];
     };
 } eeprom_data_list_t;
 

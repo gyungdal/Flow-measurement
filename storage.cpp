@@ -1,76 +1,67 @@
 #include "storage.h"
 
-void setup_eeprom(){
-    if((EEPROM.read(0) ^ EEPROM_XOR_VALUE)) != 0x00){
-        for(int i = 0;i<EEPROM.length();i++){
-            EEPROM.write(i, 0);
+void clear_eeprom(){
+    for(int i = 0;i<EEPROM.length();i++){
+        EEPROM.write(i, 0);
+    }
+}
+
+void set_eeprom_data_list(eeprom_data_list_t* data){
+    uint16_t bufferSize = (sizeof(eeprom_data_item_t) * data->length) + sizeof(uint8_t);
+
+    #ifdef DEBUG
+    Serial.print("[INFO] Write Buffer Size : ");
+    Serial.println(bufferSize);
+    #endif
+    
+    uint8_t* serializeBytes = new uint8_t[bufferSize];
+    serializeBytes[0] = data->length;
+    for(uint8_t i = 0;i<data->length;i++){
+        memcpy(&serializeBytes[(i * sizeof(eeprom_data_item_t)) + 1], &data->items[i], sizeof(eeprom_data_item_t));
+    }
+    for(uint8_t i = 0;i<((sizeof(eeprom_data_item_t) * data->length) + sizeof(uint8_t));i++){
+        EEPROM.write(i, serializeBytes[i]);
+    }
+    delete[] serializeBytes;
+}
+
+
+#define DEBUG
+
+eeprom_data_list_t* get_eeprom_data_list(){
+    eeprom_data_list_t* result = new eeprom_data_list_t;
+    result->length = EEPROM.read(0);
+    #ifdef DEBUG
+    uint16_t bufferSize = 1;
+    Serial.print("[INFO] GET LENGTH ");
+    Serial.println(result->length);
+    #endif
+
+    result->items = new eeprom_data_item_t[result->length];
+    uint8_t* buffer = new uint8_t[sizeof(eeprom_data_item_t)];
+    for(uint8_t i = 0;i<result->length;i++){
+        memset(buffer, 0x00, sizeof(eeprom_data_item_t));
+        for(uint8_t j = 0;j<sizeof(eeprom_data_item_t);j++){
+            buffer[j] = EEPROM.read(((sizeof(eeprom_data_item_t) * i) + j + 1));
+            #ifdef DEBUG
+              bufferSize++;
+            #endif
         }
+        memcpy(&result->items[i], buffer, sizeof(eeprom_data_item_t));
+      #ifdef DEBUG
+      Serial.print("[INFO] READ INDEX");
+      Serial.println(i);
+      #endif
     }
-}
-
-inline size_t get_eeprom_data_length(){
-    size_t index = 0;
-    
-    while((EEPROM.read(index * 8) ^ EEPROM_XOR_VALUE) == index)
-        index++;
-    
-    return index;
-}
-
-inline eeprom_data_item_t get_eeprom_data_item(int index){
-    eeprom_data_item_t item;
-
-    int offset = (index * sizeof(eeprom_data_item_t));
-    if(EEPROM.read(offset) != index)
-        return nullptr;
-
-    uint8_t* temp = new uint8_t[sizeof(eeprom_data_item_t)];
-    for(uint8_t i = 0;i<sizeof(eeprom_data_item_t);i++){
-        temp[i] = (EEPROM.read(offset + i) ^ EEPROM_XOR_VALUE);
-    }
-    
-    memcpy(&item, temp, sizeof(eeprom_data_item_t));
-    
-    delete[] temp;
-
-    return item;
-}
-    
-eeprom_data_list_t get_eeprom_data_list(){
-    eeprom_data_list_t result; 
-    uint8_t* data = new uint8_t[sizeof(eeprom_data_item_t)];
-    eeprom_data_item_t item;
-    while((item = get_eeprom_data_item(result.length) != nullptr){
-        result.length += 1;
-        realloc(result.items, sizeof(eeprom_data_item_t) * (result.length + 1));
-        memcpy(&result.items[result.length], item, sizeof(eeprom_data_item_t));
-    }
+    #ifdef DEBUG
+      Serial.print("[INFO] Read Buffer Size : ");
+      Serial.println(bufferSize);
+    #endif
+    delete[] buffer;
     return result;
 }
 
-inline void set_eeprom_data_item(int index, eeprom_data_item_t item){
-    int offset = (index * sizeof(eeprom_data_item_t));
-
-    uint8_t* bytes = new uint8_t[sizeof(eeprom_data_item_t)];
-    memcpy(bytes, &item, sizeof(eeprom_data_item_t));
-    for(uint8_t i = 0;i<sizeof(eeprom_data_item_t);i++){
-        EEPROM.write(offset + i, (bytes[i] ^ EEPROM_XOR_VALUE));
-    }
-    delete[] bytes;
-}
-
-void set_eeprom_data_list(eeprom_data_list_t items){
-    for(uint8_t i = 0;i<items.length;i++){
-        set_eeprom_data_item(i, items[i]);
-    }
-}
-
-
-void release_eeprom_list(eeprom_data_list_t list){
-    delete[] list.items;
-    delete &list;
-}
-
-void release_eeprom_item(eeprom_data_item_t item){
-    delete item;
+void release_eeprom_list(eeprom_data_list_t* data){
+    delete[] data->items;
+    delete data;
 }

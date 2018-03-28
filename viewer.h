@@ -1,9 +1,9 @@
-#ifndef __VIEWER_H__
+#ifdef __VIEWER_H__
 #define __VIEWER_H__
 
 //https://github.com/olikraus/U8glib_Arduino
 
-#include <U8glib.h>
+// #include <U8glib.h>
 
 class Viewer {
     public:
