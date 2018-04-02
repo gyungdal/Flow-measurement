@@ -8,6 +8,7 @@ class Test{
     public:
         Test();
         bool eeprom();
+        bool lcd();
     private:
         eeprom_data_list_t* generate_eeprom_list();
 };

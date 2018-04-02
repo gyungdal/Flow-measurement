@@ -32,6 +32,35 @@ typedef struct {
 } eeprom_data_item_t;
 
 typedef struct {
+    uint64_t counter;
+    uint64_t tick;
+
+    inline sensor_data_t operator++(){
+        tick++;
+        if(tick == UINT64_MAX){
+            counter++;
+            tick = 0;
+        }
+    }
+} sensor_data_t;
+
+typedef struct __FRAME_T{
+    uint16_t width, height;
+    uint8_t* serializeFrame;
+    uint8_t** frameBuffer;
+
+    __FRAME_T(){
+        width = 128;
+        height = 64;
+        serializeFrame = new uint8_t[width * height];
+        frameBuffer = new uint8_t[width];
+        for(uint16_t i = 0;i<width;i++){
+            frameBuffer[i] = serializeFrame[i * height];
+        }
+    };
+
+} screen_frame_t;
+typedef struct {
     uint8_t length;
     eeprom_data_item_t* items;
     inline eeprom_data_item_t operator[](const int index){
