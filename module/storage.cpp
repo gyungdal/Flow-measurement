@@ -1,12 +1,12 @@
 #include "storage.h"
 
-void clear_eeprom(){
+void Storage::clear(){
     for(int i = 0;i<EEPROM.length();i++){
         EEPROM.write(i, 0);
     }
 }
 
-void set_eeprom_data_list(eeprom_data_list_t* data){
+void Storage::set(eeprom_data_list_t* data){
     uint16_t bufferSize = (sizeof(eeprom_data_item_t) * data->length) + sizeof(uint8_t);
 
     #ifdef DEBUG
@@ -28,7 +28,7 @@ void set_eeprom_data_list(eeprom_data_list_t* data){
 
 #define DEBUG
 
-eeprom_data_list_t* get_eeprom_data_list(){
+eeprom_data_list_t* Storage::get(){
     eeprom_data_list_t* result = new eeprom_data_list_t;
     result->length = EEPROM.read(0);
     #ifdef DEBUG
@@ -61,7 +61,7 @@ eeprom_data_list_t* get_eeprom_data_list(){
     return result;
 }
 
-void release_eeprom_list(eeprom_data_list_t* data){
+void Storage::release(eeprom_data_list_t* data){
     delete[] data->items;
     delete data;
 }
