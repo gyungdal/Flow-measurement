@@ -20,7 +20,7 @@ typedef struct {
 
 typedef struct {
     uint32_t liter;
-    uint16_t mill_liter;
+    uint16_t millLiter;
 } eeprom_liquid_amount_t;
 
 typedef struct {
@@ -39,11 +39,11 @@ typedef struct {
 } eeprom_data_list_t;
 
 //sensor data
-typedef struct {
+typedef struct _SENSOR_DATA {
     uint64_t counter;
     uint64_t tick;
 
-    inline sensor_data_t operator++(){
+    inline struct _SENSOR_DATA operator++(){
         tick++;
         if(tick == UINT64_MAX){
             counter++;
@@ -65,31 +65,21 @@ typedef enum {
 typedef struct { 
     button_type_t type;
     int pin;
-    long lastTime;
     int lastState;
+    long lastTime;
 } button_data_t;
 
 //display data
 typedef enum {
-    MAIN,
-    MODE,
-    SET_TIME
+    MAIN_VIEW,
+    MODE_VIEW,
+    SET_TIME_VIEW
 } display_menu_t;
 
-typedef enum {
-    STRING,
-    REAL,
-    INTEGER
-} display_type_t;
-
 typedef struct {
-    display_type_t type;
-    union{
-        char* str;
-        double real;
-        int64_t integer;
-    };
-    bool now_select;
+    char* name;
+    char* str;
+    bool nowSelect;
 } display_data_item_t;
 
 typedef struct {
@@ -100,7 +90,7 @@ typedef struct {
     };
 } display_data_list_t;
 
-static const uint32_t scale_list[] = {
+static const uint32_t scaleList[] = {
     33, 35, 40, 45, 50, 60, 70, 80, 90,
     100, 110, 120, 130, 140, 150, 160, 170, 180, 190,
     200, 250, 300, 350, 400, 450,
@@ -110,18 +100,19 @@ static const uint32_t scale_list[] = {
     5000, 6000, 7000, 8000, 9000,
     10000, 11000, 12000, 13000, 14000, 15000, 16,000, 17000, 18000, 19000,	
     20000, 25000, 30000, 35000, 40000, 45000,
-    50000, 60000, 70000, 80000, 90000, 100000  
+    50000, 60000, 70000, 80000, 90000, 100000
 };
 
 typedef struct { 
-    uint8_t scale_index;
+    uint8_t scaleIndex;
     
     uint32_t getScale(){
-        return scale_list[scale_index];
+        return scaleList[scaleIndex];
     };
 
 
 } setting_data_t;
+
 //function
 eeprom_liquid_amount_t literToAmount(double);
 

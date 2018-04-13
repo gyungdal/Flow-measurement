@@ -26,8 +26,6 @@ void Storage::set(eeprom_data_list_t* data){
 }
 
 
-#define DEBUG
-
 eeprom_data_list_t* Storage::get(){
     eeprom_data_list_t* result = new eeprom_data_list_t;
     result->length = EEPROM.read(0);

@@ -1,5 +1,7 @@
 #include "test.h"
 
+//테스트용 함수들
+
 Test::Test(){
     Serial.println("===============================================");
     Serial.println("\t\t [DEBUG MODE]");
@@ -58,8 +60,7 @@ eeprom_data_list_t* Test::generate_eeprom_list(){
         item.time.month = random(1, 13);
         
         item.time.day = random(1, 31);
-        item.time.hour = random(1, 13);
-        item.time.am_pm = random(0, 2);
+        item.time.hour = random(1, 24);
         
         item.time.minute = random(0, 60);
         
