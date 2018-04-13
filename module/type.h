@@ -77,8 +77,8 @@ typedef enum {
 } display_menu_t;
 
 typedef struct {
-    char* name;
-    char* str;
+    char name[20];
+    char str[40];
     bool nowSelect;
 } display_data_item_t;
 
@@ -90,7 +90,7 @@ typedef struct {
     };
 } display_data_list_t;
 
-static const uint32_t scaleList[] = {
+const uint32_t scaleList[] = {
     33, 35, 40, 45, 50, 60, 70, 80, 90,
     100, 110, 120, 130, 140, 150, 160, 170, 180, 190,
     200, 250, 300, 350, 400, 450,
@@ -105,7 +105,6 @@ static const uint32_t scaleList[] = {
 
 typedef struct { 
     uint8_t scaleIndex;
-    
     uint32_t getScale(){
         return scaleList[scaleIndex];
     };
@@ -113,6 +112,10 @@ typedef struct {
 
 } setting_data_t;
 
+typedef struct {
+
+    setting_data_t setting;
+} user_data_t;
 //function
 eeprom_liquid_amount_t literToAmount(double);
 

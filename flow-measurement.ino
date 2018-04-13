@@ -18,21 +18,29 @@ button_data_t buttons[] = {
     { .type = DOWN, .pin = 27, .lastState = LOW, .lastTime = 0}
 };
 
-static mainViewSetup(){
+static void mainViewSetup(){
+    
     frame.items = new display_data_item_t[5];
     frame.length = 5;
-    frame.items[0].name = "Scale";
-    frame.items[0].str = "1/100,000";
+    const char* names[] = {
+        "Scale\0",
+        "Speed\0",
+        "Count\0",
+        "Sensor\0",
+        "Alarm\0"
+    };
+    for(uint8_t i = 0;i<frame.length;i++){
+        memset(frame.items[i].name, 0x00, 20);
+        memset(frame.items[i].str, 0x00, 40);
+        strcpy(frame.items[i].name, names[i]);
+    }
+    sprintf(frame.items[0].str, "1/%lu", scaleList[73]);
+    sprintf(frame.items[1].str, "%lu/h", scaleList[73]);
+    sprintf(frame.items[2].str, "%luL", scaleList[73]);
+    sprintf(frame.items[3].str, "%lu", scaleList[0]);
+    sprintf(frame.items[4].str, "Motor");
     frame.items[0].nowSelect = frame.items[1].nowSelect = frame.items[2].nowSelect 
             = frame.items[3].nowSelect = frame.items[4].nowSelect = false;
-    frame.items[1].name = "Speed";
-    frame.items[1].str = "99,999L/h";
-    frame.items[2].name = "Count";
-    frame.items[2].str = "9999999L";
-    frame.items[3].name = "Sensor";
-    frame.items[3].str = "1";
-    frame.items[4].name = "Alarm";
-    frame.items[4].str = "Motor!!!";
     frame.items[nowIndex].nowSelect = true;
 }
 
@@ -47,6 +55,8 @@ void setup() {
 }
 
 void update(){
+    delete[] frame.items;
+
     switch(nowMenu){
         case MAIN_VIEW:
             mainViewSetup();
@@ -66,7 +76,7 @@ void update(){
         h = u8g.getFontAscent() - u8g.getFontDescent();
         w = u8g.getWidth();
 
-        uint8_t space = (64 - (h * frame.length)) / 2;
+        uint8_t space = (64 - (h * frame.length));
         char* str = new char[100];
         for( i = 0; i < frame.length; i++) {
             memset(str, 0x00, sizeof(str) / sizeof(char));
