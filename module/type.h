@@ -76,19 +76,11 @@ typedef enum {
     SET_TIME_VIEW
 } display_menu_t;
 
-typedef struct {
-    char name[20];
-    char str[40];
-    bool nowSelect;
-} display_data_item_t;
-
-typedef struct {
-    uint8_t length;
-    display_data_item_t* items;
-    inline display_data_item_t operator[](const int index){
-        return items[index];
-    };
-} display_data_list_t;
+typedef enum {
+    uint8_t width;
+    uint8_t height;
+    uint8_t value[130];
+} xbm_data_t;
 
 const uint32_t scaleList[] = {
     33, 35, 40, 45, 50, 60, 70, 80, 90,
