@@ -16,11 +16,12 @@ typedef struct {
     uint16_t hour : 5;
 
     uint8_t minute;
+    uint8_t second;
 } time_t;
 
 typedef struct {
     uint32_t liter;
-    uint16_t millLiter;
+    uint16_t milliLiter;
 } liquid_amount_t;
 
 typedef struct {
@@ -45,8 +46,10 @@ static const sensor_tick = {
 //sensor data
 typedef struct {
     uint8_t sensorType;
+    int pin;
     uint64_t litter;
-    uint64_t tick;
+    uint32_t tick;
+    uint32_t waterPerHour;
 
     inline void resetAmount(){
         liter = 0;
@@ -56,7 +59,7 @@ typedef struct {
     inline liquid_amount_t getAmount(){
         liquid_amount_t result;
         result.litter = litter;
-        result.millLiter = (uint16_t)(((double)sensor_tick[sensorType] / tick) * 1000)
+        result.milliLiter = (uint16_t)(((double)sensor_tick[sensorType] / tick) * 1000)
         return result;
     }
 
@@ -95,6 +98,7 @@ typedef struct {
         uint32_t injectionPerHour;
         uint32_t scale;
     };
+
     inline uint32_t getScale(){
         return motor_scale_list[scale];
     }
@@ -120,7 +124,7 @@ typedef struct {
     button_type_t type;
     int pin;
     int lastState;
-    long lastTime;
+    time_t lastTime;
 } button_t;
 
 //display data

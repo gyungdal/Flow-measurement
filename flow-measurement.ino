@@ -26,15 +26,24 @@ button_t buttons[] = {
 };
 
 static void dayHandler(){
+    //EEPROM 에 저장된 리스트 Load
     eeprom_list_t* list = storage.get();
+
+    //저장된 리스트의 개수가 0인지 확인
     if(list->length != 0){
         eeprom_item_t* buffer = new eeprom_item_t[list->length + 1];
         memcpy(buffer, list->items, sizeof(eeprom_item_t) * list->length);
+        delete[] list->items;
+        list->items = buffer;
     }else{
         list->items = new eeprom_item_t;
     }
     
     list->items[list->length].index = list->length;
+    list->items[list->length].amount = user.sensor.getAmount();
+    
+    //센서 정보 초기화
+    user.sensor.resetAmount();
 
     time_t* time = rtc.get();
     list->items[list->length].time.year = time->year;
@@ -51,14 +60,38 @@ static void dayHandler(){
     delete list;
 }
 
-static void secondTimer(){
+static liquid_amount_t lastAmount;
 
+static void secondTimer(){
+    //모터에서 몇초간 신호가 오지 않았는지 계산
+    uint64_t diff;
+    uint64_t micro = micros();
+    
+    if(user.motor.lastTime > micro){
+        diff = UINT64_MAX - user.motor.lastTime;
+        diff += micro;
+    }else{
+        diff = micro - user.motor.lastTime;
+    }
+
+    //1초 이상 차이
+    if(diff > 1000000){
+        user.motor.isError = true;
+    }
+
+    //1초당 시간당 유속량 계산
+    liquid_amount_t nowAmount = user.sensor.getAmount();
+    double litter = (nowAmount.litter - lastAmount.litter);
+    litter += ((double)(nowAmount.milliLiter - lastAmount.milliLiter) / 1000.0);
+    user.sensor.waterPerHour = (uint32_t)(litter * 3600);
+    lastAmount = nowAmount;
 }
 
 void setup() {
-    Timer1.initialize(100);
+    Timer1.initialize(1000000);
     Timer1.attachInterrupt(secondTimer); 
     rtc.setDayHandler(dayHandler);
+
     nowIndex = 0;
     nowMenu = MAIN_VIEW;
     for(uint8_t i = 0;i<sizeof(buttons) / sizeof(button_t);i++){

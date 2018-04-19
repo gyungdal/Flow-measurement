@@ -50,6 +50,6 @@ time_t* RTC::get(){
     result->day = dt.day;
     result->hour = dt.hour;
     result->minute = dt.minute;
-
+    result->second = dt.second;
     return result;
 }
