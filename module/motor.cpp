@@ -9,9 +9,9 @@ void Motor::begin(motor_t* motor){
         pinMode(this->motor->pin[i], INPUT);
     }
 
-    attachInterrupt(digitalPinToInterrupt(this->motor->pin[0]), firstTick, RISING);
-    attachInterrupt(digitalPinToInterrupt(this->motor->pin[1]), secondTick, RISING);
-    attachInterrupt(digitalPinToInterrupt(this->motor->pin[2]), thirdTick, RISING);
+    attachInterrupt(digitalPinToInterrupt(motor->pin[0]), firstTick, RISING);
+    attachInterrupt(digitalPinToInterrupt(motor->pin[1]), secondTick, RISING);
+    attachInterrupt(digitalPinToInterrupt(motor->pin[2]), thirdTick, RISING);
 }
 
 void Motor::firstTick(){

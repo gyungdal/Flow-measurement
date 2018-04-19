@@ -1,10 +1,10 @@
 #include "U8glib.h"
-#include <PWM.h>
+#include <TimerOne.h>
 
 #include "module/korean.h"
 #include "module/type.h"
-#include "module/storage.h"
-#include "module/rtc.h"
+#include "module/storage.cpp"
+#include "module/rtc.cpp"
 
 U8GLIB_ST7920_128X64_1X u8g(8, 9, 10);	// SPI Com: SCK = en = 18, MOSI = rw = 16, CS = di = 17
 
@@ -17,12 +17,12 @@ Storage storage;
 user_t user;
 
 button_t buttons[] = {
-    { .type = SCALE, .pin = 22, .lastState = LOW, .lastTime = 0},
-    { .type = SAVE, .pin = 23, .lastState = LOW, .lastTime = 0},
-    { .type = ZERO, .pin = 24, .lastState = LOW, .lastTime = 0},
-    { .type = MODE, .pin = 25, .lastState = LOW, .lastTime = 0},
-    { .type = UP, .pin = 26, .lastState = LOW, .lastTime = 0},
-    { .type = DOWN, .pin = 27, .lastState = LOW, .lastTime = 0}
+    { .type = SCALE, .pin = 22, .lastState = LOW},
+    { .type = SAVE, .pin = 23, .lastState = LOW},
+    { .type = ZERO, .pin = 24, .lastState = LOW},
+    { .type = MODE, .pin = 25, .lastState = LOW},
+    { .type = UP, .pin = 26, .lastState = LOW},
+    { .type = DOWN, .pin = 27, .lastState = LOW}
 };
 
 static void dayHandler(){
@@ -66,7 +66,7 @@ static void secondTimer(){
     //모터에서 몇초간 신호가 오지 않았는지 계산
     uint64_t diff;
     uint64_t micro = micros();
-    
+
     if(user.motor.lastTime > micro){
         diff = UINT64_MAX - user.motor.lastTime;
         diff += micro;
@@ -81,9 +81,9 @@ static void secondTimer(){
 
     //1초당 시간당 유속량 계산
     liquid_amount_t nowAmount = user.sensor.getAmount();
-    double litter = (nowAmount.litter - lastAmount.litter);
-    litter += ((double)(nowAmount.milliLiter - lastAmount.milliLiter) / 1000.0);
-    user.sensor.waterPerHour = (uint32_t)(litter * 3600);
+    double liter = (nowAmount.liter - lastAmount.liter);
+    liter += ((double)(nowAmount.milliLiter - lastAmount.milliLiter) / 1000.0);
+    user.sensor.waterPerHour = (uint32_t)(liter * 3600);
     lastAmount = nowAmount;
 }
 
@@ -92,8 +92,7 @@ void setup() {
     Timer1.attachInterrupt(secondTimer); 
     rtc.setDayHandler(dayHandler);
 
-    nowIndex = 0;
-    nowMenu = MAIN_VIEW;
+    user.nowPage = MAIN_VIEW;
     for(uint8_t i = 0;i<sizeof(buttons) / sizeof(button_t);i++){
         pinMode(buttons[i].pin, INPUT);
     }
@@ -107,7 +106,7 @@ void setup() {
 
 void update(){
 
-    switch(nowMenu){
+    switch(user.nowPage){
         case MAIN_VIEW:
             break;
         default:
@@ -143,6 +142,7 @@ void update(){
 }
 
 void loop() {  
+    static int nowIndex;
     for(uint8_t i = 0;i<sizeof(buttons) / sizeof(button_t);i++){
         int state = digitalRead(buttons[i].pin);
         Serial.print(buttons[i].pin);
@@ -151,7 +151,7 @@ void loop() {
             if(buttons[i].lastState == LOW){
                 switch(buttons[i].type){
                     case UP :{
-                        switch(nowMenu){
+                        switch(user.nowPage){
                             case MAIN_VIEW:{
                                 nowIndex -= (nowIndex > 0 ? 1 : 0);
                                 break;
@@ -160,7 +160,7 @@ void loop() {
                         break;
                     }
                     case DOWN:{
-                        switch(nowMenu){
+                        switch(user.nowPage){
                             case MAIN_VIEW:{
                                 nowIndex += (nowIndex < 4 ? 1 : 0);
                                 break;

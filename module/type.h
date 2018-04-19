@@ -39,7 +39,7 @@ typedef struct {
 } eeprom_list_t;
 
 //센서별 리터당 틱
-static const sensor_tick = {   
+static const int sensor_tick[] = {   
     0, 0, 0, 0, 0, 0, 0  
 };
 
@@ -47,7 +47,7 @@ static const sensor_tick = {
 typedef struct {
     uint8_t sensorType;
     int pin;
-    uint64_t litter;
+    uint64_t liter;
     uint32_t tick;
     uint32_t waterPerHour;
 
@@ -58,15 +58,15 @@ typedef struct {
 
     inline liquid_amount_t getAmount(){
         liquid_amount_t result;
-        result.litter = litter;
-        result.milliLiter = (uint16_t)(((double)sensor_tick[sensorType] / tick) * 1000)
+        result.liter = liter;
+        result.milliLiter = (uint16_t)(((double)sensor_tick[sensorType] / tick) * 1000);
         return result;
     }
 
     inline void operator++(){
         tick++;
         if(tick == sensor_tick[sensorType]){
-            litter++;
+            liter++;
             tick = 0;
         }
     }
@@ -170,7 +170,7 @@ typedef enum {
 */
 
 typedef struct {
-    display_menu_t lastage;
+    display_menu_t lastPage;
     display_menu_t nowPage;
     motor_t motor;
     sensor_t sensor;
