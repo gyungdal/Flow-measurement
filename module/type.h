@@ -73,15 +73,23 @@ typedef struct {
 typedef enum {
     MAIN_VIEW,
     MODE_VIEW,
-    SET_TIME_VIEW
+    SET_SCALE_VIEW,
+    SELECT_LOAD_DRUG_VIEW,
+    LOADING_DRUG_VIEW,
+    RUNNING_MODE_VIEW,
+    INJECTION_PER_HOUR_VIEW,
+    LOG_VIEW,
+    SET_CURRENT_TIME_VIEW,
+    RESET_COUNT_VIEW
 } display_menu_t;
 
-typedef enum {
+typedef struct {
     uint8_t width;
     uint8_t height;
     uint8_t* value;
 } xbm_t;
 
+/*
 typedef enum {
     CLEAR_COUNT_XBM, //누적량 초기화
     AMOUNT_BY_DAY_XBM, //날짜별 음수량
@@ -101,6 +109,7 @@ typedef enum {
     CHECK_TUBE_XBM, //튜브 점검
     STOP_XBM, //정지
 } xbm_type_t;
+*/
 
 const uint32_t scaleList[] = {
     33, 35, 40, 45, 50, 60, 70, 80, 90,
@@ -125,7 +134,8 @@ typedef struct {
 } setting_data_t;
 
 typedef struct {
-
+    display_menu_t lastPage;
+    display_menu_t nowPage;
     setting_data_t setting;
 } user_data_t;
 //function

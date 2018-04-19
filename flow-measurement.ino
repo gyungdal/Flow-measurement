@@ -1,12 +1,12 @@
 #include "U8glib.h"
 
+#include "module/korean.h"
 #include "module/type.h"
 #include "module/storage.h"
 
 U8GLIB_ST7920_128X64_1X u8g(8, 9, 10);	// SPI Com: SCK = en = 18, MOSI = rw = 16, CS = di = 17
 display_menu_t nowMenu;
 int nowIndex;
-display_data_list_t frame;
 //font 한개 사이즈 : 11
 
 button_data_t buttons[] = {
@@ -18,32 +18,6 @@ button_data_t buttons[] = {
     { .type = DOWN, .pin = 27, .lastState = LOW, .lastTime = 0}
 };
 
-static void mainViewSetup(){
-    
-    frame.items = new display_data_item_t[5];
-    frame.length = 5;
-    const char* names[] = {
-        "Scale\0",
-        "Speed\0",
-        "Count\0",
-        "Sensor\0",
-        "Alarm\0"
-    };
-    for(uint8_t i = 0;i<frame.length;i++){
-        memset(frame.items[i].name, 0x00, 20);
-        memset(frame.items[i].str, 0x00, 40);
-        strcpy(frame.items[i].name, names[i]);
-    }
-    sprintf(frame.items[0].str, "1/%lu", scaleList[73]);
-    sprintf(frame.items[1].str, "%lu/h", scaleList[73]);
-    sprintf(frame.items[2].str, "%luL", scaleList[73]);
-    sprintf(frame.items[3].str, "%lu", scaleList[0]);
-    sprintf(frame.items[4].str, "Motor");
-    frame.items[0].nowSelect = frame.items[1].nowSelect = frame.items[2].nowSelect 
-            = frame.items[3].nowSelect = frame.items[4].nowSelect = false;
-    frame.items[nowIndex].nowSelect = true;
-}
-
 void setup() {
     nowIndex = 0;
     nowMenu = MAIN_VIEW;
@@ -51,19 +25,21 @@ void setup() {
         pinMode(buttons[i].pin, INPUT);
     }
     Serial.begin(115200);
-    update();
+    u8g.firstPage();
+    while(u8g.nextPage()){
+        u8g.drawXBM(0, 24, YES_XBM.width, YES_XBM.height, YES_XBM.value);
+    }
+    //update();
 }
 
 void update(){
-    delete[] frame.items;
 
     switch(nowMenu){
         case MAIN_VIEW:
-            mainViewSetup();
             break;
         default:
             break;
-    }
+    }/*
     u8g.firstPage();
     while(u8g.nextPage()){
         uint8_t i, h;
@@ -80,7 +56,7 @@ void update(){
         char* str = new char[100];
         for( i = 0; i < frame.length; i++) {
             memset(str, 0x00, sizeof(str) / sizeof(char));
-            sprintf(str, "%s : %s", frame[i].name, frame[i].str);
+            //sprintf(str, "%s : %s", frame[i].name, frame[i].str);
             d = (w-u8g.getStrWidth(str))/2;
             u8g.setDefaultForegroundColor();
             if (frame.items[i].nowSelect) {
@@ -90,7 +66,7 @@ void update(){
             u8g.drawStr(d, space + i * h, str);
         }
         delete[] str;
-    }
+    }*/
 }
 
 void loop() {  
@@ -120,7 +96,6 @@ void loop() {
                         break;
                     }
                 }
-                frame.items[0].nowSelect = !frame.items[0].nowSelect;
                 update();
             }
             buttons[i].lastState = state;
