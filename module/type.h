@@ -16,7 +16,7 @@ typedef struct {
     uint16_t hour : 5;
 
     uint8_t minute;
-} time_data_t;
+} time_t;
 
 typedef struct {
     uint32_t liter;
@@ -25,10 +25,9 @@ typedef struct {
 
 typedef struct {
     uint8_t index;
-    time_data_t time;
+    time_t time;
     eeprom_liquid_amount_t amount;
 } eeprom_data_item_t;
-
 
 typedef struct {
     uint8_t length;
@@ -38,19 +37,60 @@ typedef struct {
     };
 } eeprom_data_list_t;
 
+//센서별 리터당 틱
+static const sensor_tick = {   
+    0, 0, 0, 0, 0, 0, 0  
+};
+
 //sensor data
-typedef struct _SENSOR_DATA {
-    uint64_t counter;
+typedef struct {
+    uint8_t sensor_type;
+    uint64_t litter;
     uint64_t tick;
 
-    inline struct _SENSOR_DATA operator++(){
+    inline void operator++(){
         tick++;
-        if(tick == UINT64_MAX){
-            counter++;
+        if(tick == sensor_tick[sensor_type]){
+            litter;
             tick = 0;
         }
     }
-} sensor_data_t;
+} sensor_t;
+
+//motor 
+static const uint32_t motor_scale_list[] = {
+    33, 35, 40, 45, 50, 60, 70, 80, 90,
+    100, 110, 120, 130, 140, 150, 160, 170, 180, 190,
+    200, 250, 300, 350, 400, 450,
+    500, 600, 700, 800, 900, 
+    1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900,			
+    2000, 2500, 3000, 3500, 4000, 4500,
+    5000, 6000, 7000, 8000, 9000,
+    10000, 11000, 12000, 13000, 14000, 15000, 16,000, 17000, 18000, 19000,	
+    20000, 25000, 30000, 35000, 40000, 45000,
+    50000, 60000, 70000, 80000, 90000, 100000
+};
+
+typedef enum {
+    RUN_BY_SCALE,
+    RUN_BY_INJECTION_PER_HOUR,
+    NOT_RUN
+} motor_run_type_t;
+
+typedef struct {
+    motor_run_type_t type;
+    union {
+        uint32_t injection_per_hour;
+        uint32_t scale;
+    };
+    inline uint32_t getScale(){
+        return motor_scale_list[scale];
+    }
+    bool isError;
+    uint8_t tick;
+    uint64_t lastParse;
+    int signal_pin[3];
+} motor_t;
 
 //button
 typedef enum {
@@ -111,33 +151,13 @@ typedef enum {
 } xbm_type_t;
 */
 
-const uint32_t scaleList[] = {
-    33, 35, 40, 45, 50, 60, 70, 80, 90,
-    100, 110, 120, 130, 140, 150, 160, 170, 180, 190,
-    200, 250, 300, 350, 400, 450,
-    500, 600, 700, 800, 900, 
-    1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900,			
-    2000, 2500, 3000, 3500, 4000, 4500,
-    5000, 6000, 7000, 8000, 9000,
-    10000, 11000, 12000, 13000, 14000, 15000, 16,000, 17000, 18000, 19000,	
-    20000, 25000, 30000, 35000, 40000, 45000,
-    50000, 60000, 70000, 80000, 90000, 100000
-};
-
-typedef struct { 
-    uint8_t scaleIndex;
-    uint32_t getScale(){
-        return scaleList[scaleIndex];
-    };
-
-
-} setting_data_t;
-
 typedef struct {
     display_menu_t lastPage;
     display_menu_t nowPage;
-    setting_data_t setting;
+    motor_t motor;
+    sensor_t sensor;
 } user_data_t;
+
 //function
 eeprom_liquid_amount_t literToAmount(double);
 

@@ -5,8 +5,7 @@
 #include "module/storage.h"
 
 U8GLIB_ST7920_128X64_1X u8g(8, 9, 10);	// SPI Com: SCK = en = 18, MOSI = rw = 16, CS = di = 17
-display_menu_t nowMenu;
-int nowIndex;
+
 //font 한개 사이즈 : 11
 
 button_data_t buttons[] = {
