@@ -33,23 +33,23 @@ void RTC::setDayHandler(void (*dayHandler)()){
     this->dayHandler = dayHandler;
 }
 
-void RTC::set(time_data_t time){
+void RTC::set(time_t time){
     // Manual (Year, Month, Day, Hour, Minute, Second)
     // 지정한 시간으로 초기화 (초는 0으로 고정)
     this->clock.setDateTime(time.year, time.month, time.day, time.hour, time.month, 0);
 }
 
-time_data_t RTC::get(){
+time_t* RTC::get(){
     //RTC 모듈에서 데이터 가져옴
     RTCDateTime dt = clock.getDateTime();
 
     //데이터 처리 형식에 맞게 가공
-    time_data_t result;
-    result.year = dt.year;
-    result.month = dt.month;
-    result.day = dt.day;
-    result.hour = dt.hour;
-    result.minute = dt.minute;
+    time_t* result = new time_t;
+    result->year = dt.year;
+    result->month = dt.month;
+    result->day = dt.day;
+    result->hour = dt.hour;
+    result->minute = dt.minute;
 
     return result;
 }

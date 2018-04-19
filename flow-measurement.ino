@@ -1,12 +1,20 @@
 #include "U8glib.h"
+#include <PWM.h>
 
 #include "module/korean.h"
 #include "module/type.h"
 #include "module/storage.h"
+#include "module/rtc.h"
 
 U8GLIB_ST7920_128X64_1X u8g(8, 9, 10);	// SPI Com: SCK = en = 18, MOSI = rw = 16, CS = di = 17
 
+const int RTC_PIN = 13;
 //font 한개 사이즈 : 11
+
+RTC rtc(RTC_PIN);
+Storage storage;
+
+user_t user;
 
 button_t buttons[] = {
     { .type = SCALE, .pin = 22, .lastState = LOW, .lastTime = 0},
@@ -17,7 +25,40 @@ button_t buttons[] = {
     { .type = DOWN, .pin = 27, .lastState = LOW, .lastTime = 0}
 };
 
+static void dayHandler(){
+    eeprom_list_t* list = storage.get();
+    if(list->length != 0){
+        eeprom_item_t* buffer = new eeprom_item_t[list->length + 1];
+        memcpy(buffer, list->items, sizeof(eeprom_item_t) * list->length);
+    }else{
+        list->items = new eeprom_item_t;
+    }
+    
+    list->items[list->length].index = list->length;
+
+    time_t* time = rtc.get();
+    list->items[list->length].time.year = time->year;
+    list->items[list->length].time.month = time->month;
+    list->items[list->length].time.day = time->day;
+    list->items[list->length].time.hour = time->hour;
+    list->items[list->length].time.minute = time->minute;
+    delete time;
+
+    list->length += 1;
+    storage.set(list);
+
+    delete[] list->items;
+    delete list;
+}
+
+static void secondTimer(){
+
+}
+
 void setup() {
+    Timer1.initialize(100);
+    Timer1.attachInterrupt(secondTimer); 
+    rtc.setDayHandler(dayHandler);
     nowIndex = 0;
     nowMenu = MAIN_VIEW;
     for(uint8_t i = 0;i<sizeof(buttons) / sizeof(button_t);i++){

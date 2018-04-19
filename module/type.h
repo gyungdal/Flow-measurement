@@ -170,9 +170,6 @@ typedef struct {
     display_menu_t nowPage;
     motor_t motor;
     sensor_t sensor;
-} user_data_t;
-
-//function
-eeprom_liquid_amount_t literToAmount(double);
+} user_t;
 
 #endif  

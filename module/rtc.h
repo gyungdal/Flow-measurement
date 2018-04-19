@@ -9,8 +9,8 @@ class RTC{
     public:
         RTC() = delete;
         RTC(int pin);
-        void set(time_data_t);
-        time_data_t get();
+        void set(time_t);
+        time_t* get();
         void setDayHandler(void (*dayHandler)());
         
     private:
