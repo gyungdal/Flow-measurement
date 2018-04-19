@@ -8,7 +8,7 @@ U8GLIB_ST7920_128X64_1X u8g(8, 9, 10);	// SPI Com: SCK = en = 18, MOSI = rw = 16
 
 //font 한개 사이즈 : 11
 
-button_data_t buttons[] = {
+button_t buttons[] = {
     { .type = SCALE, .pin = 22, .lastState = LOW, .lastTime = 0},
     { .type = SAVE, .pin = 23, .lastState = LOW, .lastTime = 0},
     { .type = ZERO, .pin = 24, .lastState = LOW, .lastTime = 0},
@@ -20,7 +20,7 @@ button_data_t buttons[] = {
 void setup() {
     nowIndex = 0;
     nowMenu = MAIN_VIEW;
-    for(uint8_t i = 0;i<sizeof(buttons) / sizeof(button_data_t);i++){
+    for(uint8_t i = 0;i<sizeof(buttons) / sizeof(button_t);i++){
         pinMode(buttons[i].pin, INPUT);
     }
     Serial.begin(115200);
@@ -69,7 +69,7 @@ void update(){
 }
 
 void loop() {  
-    for(uint8_t i = 0;i<sizeof(buttons) / sizeof(button_data_t);i++){
+    for(uint8_t i = 0;i<sizeof(buttons) / sizeof(button_t);i++){
         int state = digitalRead(buttons[i].pin);
         Serial.print(buttons[i].pin);
         Serial.println(state ? "HIGH" : "LOW");

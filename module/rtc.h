@@ -12,12 +12,10 @@ class RTC{
         void set(time_data_t);
         time_data_t get();
         void setDayHandler(void (*dayHandler)());
-        void setSecondHandler(void (*secondHandler)());
         
     private:
         DS3231 clock;
         void (*dayHandler())();
-        void (*secondHandler)();
         void alarmHandler();
 };
 

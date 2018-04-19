@@ -8,10 +8,10 @@
 
 class Storage{
     public:
-        void set(eeprom_data_list_t*);
-        eeprom_data_list_t* get();
+        void set(eeprom_list_t*);
+        eeprom_list_t* get();
         void clear();
-        void release(eeprom_data_list_t*);
+        void release(eeprom_list_t*);
 };
 
 #endif

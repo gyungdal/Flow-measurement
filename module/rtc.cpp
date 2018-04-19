@@ -4,10 +4,10 @@
 
 RTC::RTC(int pin){
     this->dayHandler = nullptr;
-    this->secondHandler = nullptr;
 
     this->clock.begin();
 
+    //활성화시 컴파일된 시간으로 RTC 모듈 초기화
     #ifdef AUTO_TIME
         this->clock.setDateTime(__DATE__, __TIME__);
     #endif
@@ -16,25 +16,21 @@ RTC::RTC(int pin){
     this->clock.armAlarm2(false);
     this->clock.clearAlarm1();
     this->clock.clearAlarm2();
-    // Set Alarm - Every second.
-    // DS3231_EVERY_SECOND is available only on Alarm1.
-    // setAlarm1(Date or Day, Hour, Minute, Second, Mode, Armed = true)
-    this->clock.setAlarm1(0, 0, 0, 0, DS3231_EVERY_SECOND);
+
+    //매일 0시 0분 1초에 인터럽트 발생
+    clock.setAlarm1(0, 0, 0, 1, DS3231_MATCH_H_M_S);
 
     attachInterrupt(digitalPinToInterrupt(pin), alarmHandler, FALLING);
 }
 
 void RTC::alarmHandler(){
-    if(this->secondHandler != nullptr){
-        this->secondHandler();
-    }
-    
-    RTCDateTime dt = clock.getDateTime();
-    if(dt.hour == 0 && dt.minute == 0 && dt.second == 0){
-        if(this->dayHandler != nullptr){
-            this->dayHandler();
-        }  
-    }
+    if(this->dayHandler != nullptr){
+        this->dayHandler();
+    }  
+}
+
+void RTC::setDayHandler(void (*dayHandler)()){
+    this->dayHandler = dayHandler;
 }
 
 void RTC::set(time_data_t time){

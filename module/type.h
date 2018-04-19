@@ -21,21 +21,21 @@ typedef struct {
 typedef struct {
     uint32_t liter;
     uint16_t millLiter;
-} eeprom_liquid_amount_t;
+} liquid_amount_t;
 
 typedef struct {
     uint8_t index;
     time_t time;
-    eeprom_liquid_amount_t amount;
-} eeprom_data_item_t;
+    liquid_amount_t amount;
+} eeprom_item_t;
 
 typedef struct {
     uint8_t length;
-    eeprom_data_item_t* items;
-    inline eeprom_data_item_t operator[](const int index){
+    eeprom_item_t* items;
+    inline eeprom_item_t operator[](const int index){
         return items[index];
     };
-} eeprom_data_list_t;
+} eeprom_list_t;
 
 //센서별 리터당 틱
 static const sensor_tick = {   
@@ -44,14 +44,26 @@ static const sensor_tick = {
 
 //sensor data
 typedef struct {
-    uint8_t sensor_type;
+    uint8_t sensorType;
     uint64_t litter;
     uint64_t tick;
 
+    inline void resetAmount(){
+        liter = 0;
+        tick = 0;
+    }
+
+    inline liquid_amount_t getAmount(){
+        liquid_amount_t result;
+        result.litter = litter;
+        result.millLiter = (uint16_t)(((double)sensor_tick[sensorType] / tick) * 1000)
+        return result;
+    }
+
     inline void operator++(){
         tick++;
-        if(tick == sensor_tick[sensor_type]){
-            litter;
+        if(tick == sensor_tick[sensorType]){
+            litter++;
             tick = 0;
         }
     }
@@ -80,16 +92,18 @@ typedef enum {
 typedef struct {
     motor_run_type_t type;
     union {
-        uint32_t injection_per_hour;
+        uint32_t injectionPerHour;
         uint32_t scale;
     };
     inline uint32_t getScale(){
         return motor_scale_list[scale];
     }
     bool isError;
-    uint8_t tick;
-    uint64_t lastParse;
-    int signal_pin[3];
+    uint8_t angle; // 0 : 0, 1 : 120, 2 : 240
+    uint16_t tick;
+    uint64_t lastTime;
+    int pwmPin;
+    int signalPin[3];
 } motor_t;
 
 //button
@@ -107,7 +121,7 @@ typedef struct {
     int pin;
     int lastState;
     long lastTime;
-} button_data_t;
+} button_t;
 
 //display data
 typedef enum {
@@ -152,7 +166,7 @@ typedef enum {
 */
 
 typedef struct {
-    display_menu_t lastPage;
+    display_menu_t lastage;
     display_menu_t nowPage;
     motor_t motor;
     sensor_t sensor;
