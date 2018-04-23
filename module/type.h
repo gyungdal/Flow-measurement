@@ -98,7 +98,7 @@ typedef struct {
         uint32_t injectionPerHour;
         uint32_t scale;
     };
-
+    
     inline uint32_t getScale(){
         return motor_scale_list[scale];
     }
@@ -129,16 +129,16 @@ typedef struct {
 
 //display data
 typedef enum {
-    MAIN_VIEW,
-    MODE_VIEW,
-    SET_SCALE_VIEW,
-    SELECT_LOAD_DRUG_VIEW,
-    LOADING_DRUG_VIEW,
-    RUNNING_MODE_VIEW,
-    INJECTION_PER_HOUR_VIEW,
-    LOG_VIEW,
-    SET_CURRENT_TIME_VIEW,
-    RESET_COUNT_VIEW
+    MAIN_VIEW, //메인 뷰
+    MODE_VIEW, //모드 뷰 페이지
+    SET_SCALE_VIEW, //약물 비율 설정
+    SELECT_LOAD_DRUG_VIEW, //약물 장전 선택 페이지
+    LOADING_DRUG_VIEW, //약물 장전중 페이지
+    RUNNING_MODE_VIEW, //~~~ 모드로 동작
+    INJECTION_PER_HOUR_VIEW, //시간당 주입량 설정 페이지
+    LOG_VIEW, //이전 기록뷰
+    SET_CURRENT_TIME_VIEW, //현재 시간 설정 페이지
+    RESET_COUNT_VIEW //누적량 초기화 페이지
 } display_menu_t;
 
 typedef struct {
@@ -172,6 +172,8 @@ typedef enum {
 typedef struct {
     display_menu_t lastPage;
     display_menu_t nowPage;
+    int nowIndex;
+    int alertPin;
     motor_t motor;
     sensor_t sensor;
 } user_t;

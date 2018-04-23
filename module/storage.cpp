@@ -1,9 +1,15 @@
 #include "storage.h"
 
 void Storage::clear(){
+    #ifdef DEBUG
+        Serial.println("[INFO] EEPROM Clear Start!");
+    #endif
     for(int i = 0;i<EEPROM.length();i++){
         EEPROM.write(i, 0);
     }
+    #ifdef DEBUG
+        Serial.println("[INFO] EEPROM Clear Done!");
+    #endif
 }
 
 void Storage::set(eeprom_list_t* data){

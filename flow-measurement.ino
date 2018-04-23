@@ -6,12 +6,21 @@
 #include "module/storage.cpp"
 #include "module/rtc.cpp"
 
-U8GLIB_ST7920_128X64_1X u8g(8, 9, 10);	// SPI Com: SCK = en = 18, MOSI = rw = 16, CS = di = 17
+/*
+    U8GLIB_ST7920_128X64_1X(sck, mosi, cs [, reset])
+    Serial mode (PSB = LOW)
+    sck: Pin with label "E"
+    mosi: Pin with label "RW"
+    cs: Pin with label "RS".
+    Example: U8GLIB_ST7920_128X64_1X(sck, mosi, cs [, reset]) is equivalent to U8GLIB_ST7920_128X64_1X(E, RW, RS, RST) for many display modules. 
+*/
+
+//SW SPI-> HW SPI로 변경
+U8GLIB_ST7920_128X64_1X u8g(49);	// SPI Com: SCK = en = 18, MOSI = rw = 16, CS = di = 17
 
 const int RTC_PIN = 13;
 //font 한개 사이즈 : 11
 
-RTC rtc(RTC_PIN);
 Storage storage;
 
 user_t user;
@@ -24,7 +33,7 @@ button_t buttons[] = {
     { .type = UP, .pin = 26, .lastState = LOW},
     { .type = DOWN, .pin = 27, .lastState = LOW}
 };
-
+/*
 static void dayHandler(){
     //EEPROM 에 저장된 리스트 Load
     eeprom_list_t* list = storage.get();
@@ -59,7 +68,7 @@ static void dayHandler(){
     delete[] list->items;
     delete list;
 }
-
+*/
 static liquid_amount_t lastAmount;
 
 static void secondTimer(){
@@ -88,24 +97,37 @@ static void secondTimer(){
 }
 
 void setup() {
-    Timer1.initialize(1000000);
-    Timer1.attachInterrupt(secondTimer); 
-    rtc.setDayHandler(dayHandler);
+    Serial.begin(115200);
+    //EEPROM 정리
+    #ifdef EEPROM_CLEAR
+    storage.clear();
+    #endif
 
+    //1초 타이머 설정
+    //Timer1.initialize(1000000);
+    //Timer1.attachInterrupt(secondTimer);
+
+    //RTC에서 오는 1일 마다 발생하는 타이머 설정 
+    //rtc.setDayHandler(dayHandler);
+
+    //현재 페이지 설정 (MAIN_VIEW)
+    user.lastPage = MAIN_VIEW;
     user.nowPage = MAIN_VIEW;
     for(uint8_t i = 0;i<sizeof(buttons) / sizeof(button_t);i++){
         pinMode(buttons[i].pin, INPUT);
     }
-    Serial.begin(115200);
     u8g.firstPage();
     while(u8g.nextPage()){
+        u8g.setFont(u8g_font_unifont);
+        //u8g.setFont(u8g_font_osb21);
+        u8g.drawStr(0, 48, "Hello World!");
         u8g.drawXBM(0, 24, YES_XBM.width, YES_XBM.height, YES_XBM.value);
     }
     //update();
+    Serial.println("[DEBUG] DRAW SETUP");
 }
 
 void update(){
-
     switch(user.nowPage){
         case MAIN_VIEW:
             break;
@@ -142,7 +164,6 @@ void update(){
 }
 
 void loop() {  
-    static int nowIndex;
     for(uint8_t i = 0;i<sizeof(buttons) / sizeof(button_t);i++){
         int state = digitalRead(buttons[i].pin);
         Serial.print(buttons[i].pin);
@@ -153,7 +174,7 @@ void loop() {
                     case UP :{
                         switch(user.nowPage){
                             case MAIN_VIEW:{
-                                nowIndex -= (nowIndex > 0 ? 1 : 0);
+                                user.nowIndex -= (user.nowIndex > 0 ? 1 : 0);
                                 break;
                             }
                         }
@@ -162,7 +183,7 @@ void loop() {
                     case DOWN:{
                         switch(user.nowPage){
                             case MAIN_VIEW:{
-                                nowIndex += (nowIndex < 4 ? 1 : 0);
+                                user.nowIndex += (user.nowIndex < 4 ? 1 : 0);
                                 break;
                             }
                         }
