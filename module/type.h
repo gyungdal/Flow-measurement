@@ -124,7 +124,7 @@ typedef struct {
     button_type_t type;
     int pin;
     int lastState;
-    time_t lastTime;
+    uint64_t lastTime;
 } button_t;
 
 //display data

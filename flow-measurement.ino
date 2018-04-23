@@ -16,7 +16,7 @@
 */
 
 //SW SPI-> HW SPI로 변경
-U8GLIB_ST7920_128X64_1X u8g(49);	// SPI Com: SCK = en = 18, MOSI = rw = 16, CS = di = 17
+U8GLIB_ST7920_128X64_1X u8g(49);
 
 const int RTC_PIN = 13;
 //font 한개 사이즈 : 11
@@ -166,10 +166,19 @@ void update(){
 void loop() {  
     for(uint8_t i = 0;i<sizeof(buttons) / sizeof(button_t);i++){
         int state = digitalRead(buttons[i].pin);
-        Serial.print(buttons[i].pin);
-        Serial.println(state ? "HIGH" : "LOW");
         if(state != buttons[i].lastState){
-            if(buttons[i].lastState == LOW){
+            if(buttons[i].lastState != LOW){
+                uint64_t diffTime = millis() - buttons[i].lastTime;
+                if(diffTime < 120)
+                    continue;
+                #define DEBUG
+                #ifdef DEBUG
+                    Serial.print("[PUSH] ");
+                    Serial.print(buttons[i].pin);
+                    Serial.print(" : ");
+                    Serial.print((unsigned long)diffTime);
+                    Serial.println("ms");
+                #endif
                 switch(buttons[i].type){
                     case UP :{
                         switch(user.nowPage){
@@ -192,6 +201,7 @@ void loop() {
                 }
                 update();
             }
+            buttons[i].lastTime = millis();
             buttons[i].lastState = state;
         }
     }
