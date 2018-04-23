@@ -127,6 +127,30 @@ void setup() {
     Serial.println("[DEBUG] DRAW SETUP");
 }
 
+//메인
+static void mainViewDraw(){
+
+}
+
+//메뉴 
+static void menuViewDraw(){
+
+}
+
+//시간당 비율 설정 뷰
+static void scaleViewDraw(){
+
+}
+
+//~~모드로 동작
+static void runningViewDraw(){
+
+}
+
+//장전중
+static void loadingViewDraw(){
+
+}
 void update(){
     switch(user.nowPage){
         case MAIN_VIEW:
@@ -195,6 +219,21 @@ void loop() {
                                 user.nowIndex += (user.nowIndex < 4 ? 1 : 0);
                                 break;
                             }
+                        }
+                        break;
+                    }
+                    case ZERO : {
+                        //3초 이상 누른 경우
+                        if(diffTime>3000){
+                            u8g.firstPage();
+                            while(u8g.nextPage()){
+                                u8g.setFont(u8g_font_unifont);
+                                //u8g.setFont(u8g_font_osb21);
+                                u8g.drawXBM(0, 0, CLEAR_COUNT_XBM.width, CLEAR_COUNT_XBM.height, CLEAR_COUNT_XBM.value);
+                                u8g.drawXBM(0, 24, YES_XBM.width, YES_XBM.height, YES_XBM.value);
+                                u8g.drawXBM(0, 48, NO_XBM.width, NO_XBM.height, NO_XBM.value);
+                            }
+                            user.nowPage = CLEAR_COUNT_VIEW;
                         }
                         break;
                     }
