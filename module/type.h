@@ -169,10 +169,17 @@ typedef enum {
 } xbm_type_t;
 */
 
+typedef enum {
+    SCALE_MODE,
+    MEASURE_ONLY_WATER_MODE
+} mode_t;
+
 typedef struct {
     display_menu_t lastPage;
     display_menu_t nowPage;
-    int nowIndex;
+    mode_t mode;
+    int8_t nowIndex;
+    uint8_t itemLength;
     int alertPin;
     motor_t motor;
     sensor_t sensor;

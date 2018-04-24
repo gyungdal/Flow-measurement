@@ -138,24 +138,42 @@ static void mainViewDraw(){
         u8g.drawXBM(0, 32, WATER_COUNT_XBM.width, WATER_COUNT_XBM.height, WATER_COUNT_XBM.value);
         u8g.drawXBM(0, 45, SENSOR_XBM.width, SENSOR_XBM.height, SENSOR_XBM.value);
 
-        u8g.setFont(u8g_font_6x13);
+        u8g.setFont(u8g_font_7x14);
         sprintf(str, " : 1/%d", user.motor.getScale());
-        u8g.drawStr(24, 19, str);
+        u8g.drawStr(24, 18, str);
         memset(str, 0x00, 100);
         sprintf(str, " : %dL/h", user.sensor.waterPerHour);
-        u8g.drawStr(24, 32, str);
+        u8g.drawStr(24, 31, str);
         memset(str, 0x00, 100);
         sprintf(str, " : %dL", user.sensor.liter);
-        u8g.drawStr(36, 45, str);
+        u8g.drawStr(36, 44, str);
         memset(str, 0x00, 100);
         sprintf(str, " : %u", user.sensor.sensorType);
-        u8g.drawStr(24, 58, str);   
+        u8g.drawStr(24, 57, str);   
     }
 }
 
 //메뉴 
 static void menuViewDraw(){
+    u8g.firstPage();
+    xbm_t* list = new xbm_t[4];
+    list[0] = INJECTION_PER_HOUR_XBM;
+    list[1] = MEASURE_ONLY_WATER_XBM;
+    list[2] = AMOUNT_BY_DAY_XBM;
+    list[3] = SET_CURRENT_TIME_XBM;
 
+    while(u8g.nextPage()){
+        for(uint8_t i = 0;i < user.itemLength + 1;i++){
+            u8g.setDefaultForegroundColor();
+            if(user.nowIndex == i){
+                u8g.drawBox(0, 6 + (13 * i), 128, 13);
+                u8g.setDefaultBackgroundColor();
+            }
+            u8g.drawXBM(0, 6 + (13 * i), list[i].width, list[i].height, list[i].value);
+        }
+    }
+
+    delete[] list;
 }
 
 //시간당 비율 설정 뷰
@@ -170,13 +188,36 @@ static void runningViewDraw(){
 
 //장전중
 static void loadingViewDraw(){
-
+    xbm_t* list = new xbm_t[2];
+    list[0] = INJECTION_PER_HOUR_XBM;
+    list[1] = MEASURE_ONLY_WATER_XBM;
+    u8g.firstPage();
+    while(u8g.nextPage()){
+        u8g.drawXBM(0, 19, list[user.nowIndex].width, list[user.nowIndex].height, list[user.nowIndex].value);
+        u8g.drawXBM(0, 32, RUNNING_IN_MODE_XBM.width, RUNNING_IN_MODE_XBM.height, RUNNING_IN_MODE_XBM.value);
+    }
+    delete[] list;
 }
+
 void update(){
     switch(user.nowPage){
         case MAIN_VIEW:
             mainViewDraw();
             break;
+        case MODE_VIEW:
+            menuViewDraw();
+            break;
+        case CLEAR_COUNT_VIEW: {
+            u8g.firstPage();
+            while(u8g.nextPage()){
+                u8g.setFont(u8g_font_unifont);
+                //u8g.setFont(u8g_font_osb21);
+                u8g.drawXBM(0, 0, CLEAR_COUNT_XBM.width, CLEAR_COUNT_XBM.height, CLEAR_COUNT_XBM.value);
+                u8g.drawXBM(0, 24, YES_XBM.width, YES_XBM.height, YES_XBM.value);
+                u8g.drawXBM(0, 48, NO_XBM.width, NO_XBM.height, NO_XBM.value);
+            }
+            break;
+        }
         default:
             break;
     }/*
@@ -229,38 +270,86 @@ void loop() {
                 switch(buttons[i].type){
                     case UP :{
                         switch(user.nowPage){
-                            case MAIN_VIEW:{
+                            case MODE_VIEW:{
                                 user.nowIndex -= (user.nowIndex > 0 ? 1 : 0);
                                 break;
                             }
                             case CLEAR_COUNT_VIEW : {
-                                update();
-                                user.nowPage = MAIN_VIEW;
+                                user.nowPage = user.lastPage;
                                 break;
+                            }
+                            default:
+                                break;
+                        }
+                        update();
+                        break;
+                    }
+                    case MODE: {
+                        switch(user.nowPage){
+                            case MAIN_VIEW : {
+                                user.lastPage = user.nowPage;
+                                user.nowPage = MODE_VIEW;
+                                user.nowIndex = -1;
+                                user.itemLength = 3;
+                                break;
+                            }
+                            case MODE_VIEW : {
+                                switch(user.nowIndex){
+                                    case -1 :{
+                                        user.nowPage = MAIN_VIEW;
+                                        user.nowIndex = user.itemLength = 0;
+                                        break;
+                                    }
+
+                                    //시간당 주입
+                                    case 0 :{
+
+                                        break;
+                                    }
+                                    
+                                    //음수량만 측정
+                                    case 1 : {
+                                        
+                                        break;
+                                    }
+                                    
+                                    //날짜별 음수량
+                                    case 2 : {
+
+                                        break;
+                                    }
+                                    
+                                    //현재시간 설정
+                                    case 3 : {
+
+                                        break;
+                                    }
+                                    
+                                }
                             }
                         }
                         break;
                     }
                     case DOWN:{
                         switch(user.nowPage){
-                            case MAIN_VIEW:{
-                                user.nowIndex += (user.nowIndex < 4 ? 1 : 0);
+                            case MODE_VIEW:{
+                                user.nowIndex += (user.nowIndex < user.itemLength ? 1 : 0);
                                 break;
                             }
+                            case CLEAR_COUNT_VIEW : {
+                                user.nowPage = user.lastPage;
+                                break;
+                            }
+                            default:
+                                break;
                         }
+                        update();
                         break;
                     }
                     case ZERO : {
                         //3초 이상 누른 경우
                         if(diffTime>3000){
-                            u8g.firstPage();
-                            while(u8g.nextPage()){
-                                u8g.setFont(u8g_font_unifont);
-                                //u8g.setFont(u8g_font_osb21);
-                                u8g.drawXBM(0, 0, CLEAR_COUNT_XBM.width, CLEAR_COUNT_XBM.height, CLEAR_COUNT_XBM.value);
-                                u8g.drawXBM(0, 24, YES_XBM.width, YES_XBM.height, YES_XBM.value);
-                                u8g.drawXBM(0, 48, NO_XBM.width, NO_XBM.height, NO_XBM.value);
-                            }
+                            user.lastPage = user.nowPage;
                             user.nowPage = CLEAR_COUNT_VIEW;
                         }
                         break;
