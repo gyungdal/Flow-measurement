@@ -107,6 +107,7 @@ void setup() {
     #ifdef EEPROM_CLEAR
     storage.clear();
     #endif
+    user.motor.type = NOT_RUN;
 
     //1초 타이머 설정
     //Timer1.initialize(1000000);
@@ -133,14 +134,29 @@ static void mainViewDraw(){
     char str[100];
     u8g.firstPage();
     while(u8g.nextPage()){
-        u8g.drawXBM(0, 6, WATER_SCALE_XBM.width, WATER_SCALE_XBM.height, WATER_SCALE_XBM.value);
+        u8g.setFont(u8g_font_7x14);
+        switch(user.motor.type){
+            case RUN_BY_INJECTION_PER_HOUR : {
+                sprintf(str, "%ucc", user.motor.injectionPerHour);
+                u8g.drawStr(36, 18, str);
+                u8g.drawXBM(0, 6, 36, INJECTION_PER_HOUR_XBM.height, INJECTION_PER_HOUR_XBM.value);
+                break;
+            }
+            case RUN_BY_SCALE : {
+                sprintf(str, " : 1/%d", user.motor.getScale());
+                u8g.drawStr(WATER_SCALE_XBM.width, 18, str);
+                u8g.drawXBM(0, 6, WATER_SCALE_XBM.width, WATER_SCALE_XBM.height, WATER_SCALE_XBM.value);
+                break;
+            }
+            case NOT_RUN : {
+                u8g.drawXBM(0, 6, MEASURE_ONLY_WATER_XBM.width, MEASURE_ONLY_WATER_XBM.height, MEASURE_ONLY_WATER_XBM.value);
+                break;
+            }
+        }
         u8g.drawXBM(0, 19, WATER_SPEED_XBM.width, WATER_SPEED_XBM.height, WATER_SPEED_XBM.value);
         u8g.drawXBM(0, 32, WATER_COUNT_XBM.width, WATER_COUNT_XBM.height, WATER_COUNT_XBM.value);
         u8g.drawXBM(0, 45, SENSOR_XBM.width, SENSOR_XBM.height, SENSOR_XBM.value);
 
-        u8g.setFont(u8g_font_7x14);
-        sprintf(str, " : 1/%d", user.motor.getScale());
-        u8g.drawStr(24, 18, str);
         memset(str, 0x00, 100);
         sprintf(str, " : %dL/h", user.sensor.waterPerHour);
         u8g.drawStr(24, 31, str);
@@ -183,20 +199,25 @@ static void scaleViewDraw(){
 
 //~~모드로 동작
 static void runningViewDraw(){
-
+    xbm_t* list = new xbm_t[3];
+    list[0] = INJECTION_PER_HOUR_XBM;
+    list[1] = DRUG_WATER_SCALE_XBM;
+    list[2] = MEASURE_ONLY_WATER_XBM;
+    u8g.firstPage();
+    while(u8g.nextPage()){
+        u8g.drawXBM(0, 19, list[user.mode].width, list[user.mode].height, list[user.mode].value);
+        u8g.drawXBM(0, 32, RUNNING_IN_MODE_XBM.width, RUNNING_IN_MODE_XBM.height, RUNNING_IN_MODE_XBM.value);
+    }
+    delay(100);
+    user.nowPage = MAIN_VIEW;
+    delete[] list;
+    delay(100);
+    user.nowPage = MAIN_VIEW;
+    user.mode = NOTHING_MODE;
 }
 
 //장전중
 static void loadingViewDraw(){
-    xbm_t* list = new xbm_t[2];
-    list[0] = INJECTION_PER_HOUR_XBM;
-    list[1] = MEASURE_ONLY_WATER_XBM;
-    u8g.firstPage();
-    while(u8g.nextPage()){
-        u8g.drawXBM(0, 19, list[user.nowIndex].width, list[user.nowIndex].height, list[user.nowIndex].value);
-        u8g.drawXBM(0, 32, RUNNING_IN_MODE_XBM.width, RUNNING_IN_MODE_XBM.height, RUNNING_IN_MODE_XBM.value);
-    }
-    delete[] list;
 }
 
 void update(){
@@ -216,6 +237,10 @@ void update(){
                 u8g.drawXBM(0, 24, YES_XBM.width, YES_XBM.height, YES_XBM.value);
                 u8g.drawXBM(0, 48, NO_XBM.width, NO_XBM.height, NO_XBM.value);
             }
+            break;
+        }
+        case RUNNING_IN_MODE_VIEW : {
+            runningViewDraw();
             break;
         }
         default:
@@ -287,45 +312,12 @@ void loop() {
                     case MODE: {
                         switch(user.nowPage){
                             case MAIN_VIEW : {
+                                user.mode = NOTHING_MODE;
                                 user.lastPage = user.nowPage;
                                 user.nowPage = MODE_VIEW;
                                 user.nowIndex = -1;
                                 user.itemLength = 3;
                                 break;
-                            }
-                            case MODE_VIEW : {
-                                switch(user.nowIndex){
-                                    case -1 :{
-                                        user.nowPage = MAIN_VIEW;
-                                        user.nowIndex = user.itemLength = 0;
-                                        break;
-                                    }
-
-                                    //시간당 주입
-                                    case 0 :{
-
-                                        break;
-                                    }
-                                    
-                                    //음수량만 측정
-                                    case 1 : {
-                                        
-                                        break;
-                                    }
-                                    
-                                    //날짜별 음수량
-                                    case 2 : {
-
-                                        break;
-                                    }
-                                    
-                                    //현재시간 설정
-                                    case 3 : {
-
-                                        break;
-                                    }
-                                    
-                                }
                             }
                         }
                         break;
@@ -345,6 +337,46 @@ void loop() {
                         }
                         update();
                         break;
+                    }
+                    case SAVE : {
+                        switch(user.nowPage){
+                            case MODE_VIEW : {
+                                switch(user.nowIndex){
+                                    case -1 :{
+                                        user.nowPage = MAIN_VIEW;
+                                        user.nowIndex = user.itemLength = 0;
+                                        break;
+                                    }
+
+                                    //시간당 주입
+                                    case 0 :{
+                                        user.mode = INJECTION_PER_HOUR_MODE;
+                                        user.nowPage = INJECTION_PER_HOUR_VIEW;
+                                        break;
+                                    }
+                                    
+                                    //음수량만 측정
+                                    case 1 : {
+                                        user.mode = MEASURE_ONLY_WATER_MODE;
+                                        user.nowPage = RUNNING_IN_MODE_VIEW;
+                                        break;
+                                    }
+                                    
+                                    //날짜별 음수량
+                                    case 2 : {
+
+                                        break;
+                                    }
+                                    
+                                    //현재시간 설정
+                                    case 3 : {
+
+                                        break;
+                                    }
+                                    
+                                }
+                            }
+                        }
                     }
                     case ZERO : {
                         //3초 이상 누른 경우

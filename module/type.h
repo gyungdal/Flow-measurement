@@ -134,7 +134,7 @@ typedef enum {
     SET_SCALE_VIEW, //약물 비율 설정
     SELECT_LOAD_DRUG_VIEW, //약물 장전 선택 페이지
     LOADING_DRUG_VIEW, //약물 장전중 페이지
-    RUNNING_MODE_VIEW, //~~~ 모드로 동작
+    RUNNING_IN_MODE_VIEW, //~~~ 모드로 동작
     INJECTION_PER_HOUR_VIEW, //시간당 주입량 설정 페이지
     LOG_VIEW, //이전 기록뷰
     SET_CURRENT_TIME_VIEW, //현재 시간 설정 페이지
@@ -170,8 +170,10 @@ typedef enum {
 */
 
 typedef enum {
+    INJECTION_PER_HOUR_MODE,
     SCALE_MODE,
-    MEASURE_ONLY_WATER_MODE
+    MEASURE_ONLY_WATER_MODE,
+    NOTHING_MODE
 } mode_t;
 
 typedef struct {
