@@ -392,7 +392,7 @@ void loop() {
                         switch(user.nowPage){
                             case SELECT_SENSOR_VIEW : {
                                 if(user.sensor.sensorType > 0)
-                                    user.sensor.sensorType--[; 
+                                    user.sensor.sensorType--; 
                                 break;
                             }
                             case SET_SCALE_VIEW : {
