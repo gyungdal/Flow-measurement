@@ -15,6 +15,10 @@
     Example: U8GLIB_ST7920_128X64_1X(sck, mosi, cs [, reset]) is equivalent to U8GLIB_ST7920_128X64_1X(E, RW, RS, RST) for many display modules. 
 */
 
+//한글은 한 글자당 12, Space는 4
+
+//u8glib는 글자를 그릴때에는 끝점부터잡고, xbm은 시작점을 잡는듯
+
 //SW SPI-> HW SPI로 변경
 U8GLIB_ST7920_128X64_1X u8g(49);
 
@@ -98,6 +102,7 @@ static void secondTimer(){
 
 void setup() {
     Serial.begin(115200);
+    user.sensor.sensorType = 0;
     //EEPROM 정리
     #ifdef EEPROM_CLEAR
     storage.clear();
@@ -116,20 +121,36 @@ void setup() {
     for(uint8_t i = 0;i<sizeof(buttons) / sizeof(button_t);i++){
         pinMode(buttons[i].pin, INPUT);
     }
-    u8g.firstPage();
-    while(u8g.nextPage()){
-        u8g.setFont(u8g_font_unifont);
-        //u8g.setFont(u8g_font_osb21);
-        u8g.drawStr(0, 48, "Hello World!");
-        u8g.drawXBM(0, 24, YES_XBM.width, YES_XBM.height, YES_XBM.value);
-    }
-    //update();
-    Serial.println("[DEBUG] DRAW SETUP");
+
+    update();
+    #ifdef DEBUG
+        Serial.println("[DEBUG] DRAW SETUP");
+    #endif
 }
 
 //메인
 static void mainViewDraw(){
+    char str[100];
+    u8g.firstPage();
+    while(u8g.nextPage()){
+        u8g.drawXBM(0, 6, WATER_SCALE_XBM.width, WATER_SCALE_XBM.height, WATER_SCALE_XBM.value);
+        u8g.drawXBM(0, 19, WATER_SPEED_XBM.width, WATER_SPEED_XBM.height, WATER_SPEED_XBM.value);
+        u8g.drawXBM(0, 32, WATER_COUNT_XBM.width, WATER_COUNT_XBM.height, WATER_COUNT_XBM.value);
+        u8g.drawXBM(0, 45, SENSOR_XBM.width, SENSOR_XBM.height, SENSOR_XBM.value);
 
+        u8g.setFont(u8g_font_6x13);
+        sprintf(str, " : 1/%d", user.motor.getScale());
+        u8g.drawStr(24, 19, str);
+        memset(str, 0x00, 100);
+        sprintf(str, " : %dL/h", user.sensor.waterPerHour);
+        u8g.drawStr(24, 32, str);
+        memset(str, 0x00, 100);
+        sprintf(str, " : %dL", user.sensor.liter);
+        u8g.drawStr(36, 45, str);
+        memset(str, 0x00, 100);
+        sprintf(str, " : %u", user.sensor.sensorType);
+        u8g.drawStr(24, 58, str);   
+    }
 }
 
 //메뉴 
@@ -154,6 +175,7 @@ static void loadingViewDraw(){
 void update(){
     switch(user.nowPage){
         case MAIN_VIEW:
+            mainViewDraw();
             break;
         default:
             break;
@@ -188,6 +210,7 @@ void update(){
 }
 
 void loop() {  
+    display_menu_t beforePage = user.nowPage;
     for(uint8_t i = 0;i<sizeof(buttons) / sizeof(button_t);i++){
         int state = digitalRead(buttons[i].pin);
         if(state != buttons[i].lastState){
@@ -208,6 +231,11 @@ void loop() {
                         switch(user.nowPage){
                             case MAIN_VIEW:{
                                 user.nowIndex -= (user.nowIndex > 0 ? 1 : 0);
+                                break;
+                            }
+                            case CLEAR_COUNT_VIEW : {
+                                update();
+                                user.nowPage = MAIN_VIEW;
                                 break;
                             }
                         }
@@ -244,4 +272,6 @@ void loop() {
             buttons[i].lastState = state;
         }
     }
+    if(beforePage != user.nowPage)
+        update();
 }
