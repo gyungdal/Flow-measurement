@@ -131,15 +131,15 @@ void setup() {
 
 //메인
 static void mainViewDraw(){
-    char str[100];
+    char* str = calloc(sizeof(char), 100);
     u8g.firstPage();
     while(u8g.nextPage()){
         u8g.setFont(u8g_font_7x14);
         switch(user.motor.type){
             case RUN_BY_INJECTION_PER_HOUR : {
-                sprintf(str, "%ucc", user.motor.injectionPerHour);
-                u8g.drawStr(36, 18, str);
-                u8g.drawXBM(0, 6, 36, INJECTION_PER_HOUR_XBM.height, INJECTION_PER_HOUR_XBM.value);
+                sprintf(str, " : %ucc", user.motor.injectionPerHour);
+                u8g.drawStr(PER_HOUR_XBM.width, 18, str);
+                u8g.drawXBM(0, 6, PER_HOUR_XBM.width, PER_HOUR_XBM.height, PER_HOUR_XBM.value);
                 break;
             }
             case RUN_BY_SCALE : {
@@ -167,6 +167,7 @@ static void mainViewDraw(){
         sprintf(str, " : %u", user.sensor.sensorType);
         u8g.drawStr(24, 57, str);   
     }
+    delete[] str;
 }
 
 //메뉴 
@@ -193,8 +194,16 @@ static void menuViewDraw(){
 }
 
 //시간당 비율 설정 뷰
-static void scaleViewDraw(){
-
+static void setScaleViewDraw(){
+    u8g.firstPage();
+    char* str = calloc(sizeof(char), 100);
+    u8g.setFont(u8g_font_7x14);
+    while(u8g.nextPage()){
+        u8g.drawXBM(23, 19, DRUG_WATER_SCALE_XBM.width, DRUG_WATER_SCALE_XBM.height, DRUG_WATER_SCALE_XBM.value);
+        sprintf(str, "%u", user.motor.getScale());
+        u8g.drawStr(64 - (u8g.getStrWidth(str) / 2), 46, str);
+    }
+    delete[] str;
 }
 
 //~~모드로 동작
@@ -208,12 +217,22 @@ static void runningViewDraw(){
         u8g.drawXBM(0, 19, list[user.mode].width, list[user.mode].height, list[user.mode].value);
         u8g.drawXBM(0, 32, RUNNING_IN_MODE_XBM.width, RUNNING_IN_MODE_XBM.height, RUNNING_IN_MODE_XBM.value);
     }
-    delay(100);
-    user.nowPage = MAIN_VIEW;
-    delete[] list;
-    delay(100);
     user.nowPage = MAIN_VIEW;
     user.mode = NOTHING_MODE;
+    delete[] list;
+    delay(300);
+}
+
+//시간당 주입량 조절
+static void injectionPerHourViewDraw(){
+    u8g.firstPage();
+    char* str = calloc(sizeof(char), 100);
+    while(u8g.nextPage()){
+        u8g.drawXBM(32, 19, INJECTION_PER_HOUR_XBM.width, INJECTION_PER_HOUR_XBM.height, INJECTION_PER_HOUR_XBM.value);
+        sprintf(str, "%u", user.motor.injectionPerHour);
+        u8g.drawStr(64 - (u8g.getStrWidth(str) / 2), 46, str);
+    }
+    delete[] str;
 }
 
 //장전중
@@ -228,6 +247,13 @@ void update(){
         case MODE_VIEW:
             menuViewDraw();
             break;
+        case SET_SCALE_VIEW : 
+            setScaleViewDraw();
+            break;
+        case INJECTION_PER_HOUR_VIEW : {
+            injectionPerHourViewDraw();
+            break;
+        }
         case CLEAR_COUNT_VIEW: {
             u8g.firstPage();
             while(u8g.nextPage()){
@@ -295,12 +321,22 @@ void loop() {
                 switch(buttons[i].type){
                     case UP :{
                         switch(user.nowPage){
+                            case SET_SCALE_VIEW : {
+                                user.motor.scale += (user.motor.scale < 73 ? 1 : 0);
+                                update();
+                                break;
+                            }
                             case MODE_VIEW:{
                                 user.nowIndex -= (user.nowIndex > 0 ? 1 : 0);
                                 break;
                             }
                             case CLEAR_COUNT_VIEW : {
                                 user.nowPage = user.lastPage;
+                                break;
+                            }
+                            case INJECTION_PER_HOUR_VIEW : {
+                                if(user.motor.injectionPerHour < 5000)
+                                    user.motor.injectionPerHour += 10;
                                 break;
                             }
                             default:
@@ -319,13 +355,28 @@ void loop() {
                                 user.itemLength = 3;
                                 break;
                             }
+                            case MODE_VIEW : {
+                                user.mode = NOTHING_MODE;
+                                user.lastPage = user.nowPage = MAIN_VIEW;
+                                break;
+                            }
                         }
                         break;
                     }
                     case DOWN:{
                         switch(user.nowPage){
+                            case SET_SCALE_VIEW : {
+                                user.motor.scale -= (user.motor.scale > 0 ? 1 : 0);
+                                update();
+                                break;
+                            }
                             case MODE_VIEW:{
                                 user.nowIndex += (user.nowIndex < user.itemLength ? 1 : 0);
+                                break;
+                            }
+                            case INJECTION_PER_HOUR_VIEW : {
+                                if(user.motor.injectionPerHour > 0)
+                                    user.motor.injectionPerHour -= 10;
                                 break;
                             }
                             case CLEAR_COUNT_VIEW : {
@@ -338,8 +389,24 @@ void loop() {
                         update();
                         break;
                     }
+                    case SCALE : {
+                        if(user.nowPage == MAIN_VIEW){
+                            user.nowPage = SET_SCALE_VIEW;
+                        }
+                        break;
+                    }
                     case SAVE : {
                         switch(user.nowPage){
+                            case SET_SCALE_VIEW : {
+                                user.motor.type = RUN_BY_SCALE;
+                                user.mode = SCALE_MODE;
+                                user.nowPage = RUNNING_IN_MODE_VIEW;
+                                break;
+                            }
+                            case INJECTION_PER_HOUR_VIEW : {
+                                user.nowPage = RUNNING_IN_MODE_VIEW;
+                                break;
+                            }
                             case MODE_VIEW : {
                                 switch(user.nowIndex){
                                     case -1 :{
@@ -350,6 +417,8 @@ void loop() {
 
                                     //시간당 주입
                                     case 0 :{
+                                        user.motor.type = RUN_BY_INJECTION_PER_HOUR;
+                                        user.motor.injectionPerHour = 0;
                                         user.mode = INJECTION_PER_HOUR_MODE;
                                         user.nowPage = INJECTION_PER_HOUR_VIEW;
                                         break;
@@ -357,6 +426,8 @@ void loop() {
                                     
                                     //음수량만 측정
                                     case 1 : {
+                                        user.motor.type = NOT_RUN;
+                                        user.motor.scale = 0;
                                         user.mode = MEASURE_ONLY_WATER_MODE;
                                         user.nowPage = RUNNING_IN_MODE_VIEW;
                                         break;
