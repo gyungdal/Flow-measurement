@@ -138,7 +138,8 @@ typedef enum {
     INJECTION_PER_HOUR_VIEW, //시간당 주입량 설정 페이지
     LOG_VIEW, //이전 기록뷰
     SET_CURRENT_TIME_VIEW, //현재 시간 설정 페이지
-    CLEAR_COUNT_VIEW //누적량 초기화 페이지
+    CLEAR_COUNT_VIEW, //누적량 초기화 페이지
+    SELECT_SENSOR_VIEW //센서 선택 페이지
 } display_menu_t;
 
 typedef struct {

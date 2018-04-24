@@ -239,6 +239,17 @@ static void injectionPerHourViewDraw(){
 static void loadingViewDraw(){
 }
 
+static void selectSensorViewDraw(){
+    u8g.firstPage();
+    char* str = calloc(sizeof(char), 100);
+    while(u8g.nextPage()){
+        u8g.drawXBM(23, 19, SELECT_SENSOR_TYPE_XBM.width, SELECT_SENSOR_TYPE_XBM.height, SELECT_SENSOR_TYPE_XBM.value);
+        sprintf(str, "%u", user.sensor.sensorType);
+        u8g.drawStr(64 - (u8g.getStrWidth(str) / 2), 46, str);
+    }
+    delete[] str;
+}
+
 void update(){
     switch(user.nowPage){
         case MAIN_VIEW:
@@ -252,6 +263,10 @@ void update(){
             break;
         case INJECTION_PER_HOUR_VIEW : {
             injectionPerHourViewDraw();
+            break;
+        }
+        case SELECT_SENSOR_VIEW : {
+            selectSensorViewDraw();
             break;
         }
         case CLEAR_COUNT_VIEW: {
@@ -321,6 +336,11 @@ void loop() {
                 switch(buttons[i].type){
                     case UP :{
                         switch(user.nowPage){
+                            case SELECT_SENSOR_VIEW : {
+                                if(user.sensor.sensorType < 6)
+                                    user.sensor.sensorType++; 
+                                break;
+                            }
                             case SET_SCALE_VIEW : {
                                 user.motor.scale += (user.motor.scale < 73 ? 1 : 0);
                                 update();
@@ -345,14 +365,19 @@ void loop() {
                         update();
                         break;
                     }
-                    case MODE: {
+                    case MODE : {
                         switch(user.nowPage){
                             case MAIN_VIEW : {
-                                user.mode = NOTHING_MODE;
-                                user.lastPage = user.nowPage;
-                                user.nowPage = MODE_VIEW;
-                                user.nowIndex = -1;
-                                user.itemLength = 3;
+                                if(diffTime < 3000){
+                                    user.mode = NOTHING_MODE;
+                                    user.lastPage = user.nowPage;
+                                    user.nowPage = MODE_VIEW;
+                                    user.nowIndex = -1;
+                                    user.itemLength = 3;
+                                }else{
+                                    user.mode = NOTHING_MODE;
+                                    user.nowPage = SELECT_SENSOR_VIEW;
+                                }
                                 break;
                             }
                             case MODE_VIEW : {
@@ -365,6 +390,11 @@ void loop() {
                     }
                     case DOWN:{
                         switch(user.nowPage){
+                            case SELECT_SENSOR_VIEW : {
+                                if(user.sensor.sensorType > 0)
+                                    user.sensor.sensorType--[; 
+                                break;
+                            }
                             case SET_SCALE_VIEW : {
                                 user.motor.scale -= (user.motor.scale > 0 ? 1 : 0);
                                 update();
@@ -405,6 +435,10 @@ void loop() {
                             }
                             case INJECTION_PER_HOUR_VIEW : {
                                 user.nowPage = RUNNING_IN_MODE_VIEW;
+                                break;
+                            }
+                            case SELECT_SENSOR_VIEW : {
+                                user.nowPage = MAIN_VIEW;
                                 break;
                             }
                             case MODE_VIEW : {
