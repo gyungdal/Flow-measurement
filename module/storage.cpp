@@ -35,7 +35,7 @@ eeprom_setting_t* Storage::readSetting(){
         serializeBytes[i] = EEPROM.read((eepromOffset + i));
     }
     memcpy(setting, serializeBytes, sizeof(eeprom_setting_t));
-    delete[] serializeBytes;
+    q32delete[] serializeBytes;
     return setting;
 }
 

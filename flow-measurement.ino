@@ -212,6 +212,16 @@ static void setScaleViewDraw(){
     delete[] str;
 }
 
+//물약 장전
+static void loadingDrugViewDraw(){
+
+}
+
+//물약 장전 중지
+static void stopLoadingDrugViewDraw(){
+    
+}
+
 //~~모드로 동작
 static void runningViewDraw(){
     xbm_t* list = new xbm_t[3];
