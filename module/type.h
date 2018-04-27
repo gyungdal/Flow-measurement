@@ -116,7 +116,7 @@ typedef struct {
     uint16_t tick;
     uint64_t lastTime;
     int pwmPin;
-    int signalPin[3];
+    int sigPin[2];
 } motor_t;
 
 //button

@@ -23,14 +23,14 @@
 
 //SW SPI-> HW SPI로 변경
 U8GLIB_ST7920_128X64_1X u8g(49);
-
-const int RTC_PIN = 13;
 //font 한개 사이즈 : 11
+
+const int RTC_PIN = 2;
 
 Storage storage;
 Sensor sensor;
 Motor motor;
-
+RTC rtc(RTC_PIN);
 user_t user;
 
 button_t buttons[] = {
@@ -112,7 +112,9 @@ void setup() {
     storage.clear();
     #endif
     user.motor.type = NOT_RUN;
-
+    user.motor.pwmPin = A0;
+    user.motor.sigPin[0] = 18;
+    user.motor.sigPin[1] = 19;
     //1초 타이머 설정
     //Timer1.initialize(1000000);
     //Timer1.attachInterrupt(secondTimer);

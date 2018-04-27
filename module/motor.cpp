@@ -4,14 +4,14 @@ void Motor::begin(motor_t* motor){
     this->motor = motor;
 
     pinMode(this->motor->pwmPin, OUTPUT);
+    analogWrite(this->motor->pwmPin, 0);
 
-    for(uint8_t i = 0;i<3;i++){
-        pinMode(this->motor->pin[i], INPUT);
+    for(uint8_t i = 0;i<2;i++){
+        pinMode(this->motor->sigPin[i], INPUT_PULLUP);
     }
 
-    attachInterrupt(digitalPinToInterrupt(motor->pin[0]), firstTick, RISING);
-    attachInterrupt(digitalPinToInterrupt(motor->pin[1]), secondTick, RISING);
-    attachInterrupt(digitalPinToInterrupt(motor->pin[2]), thirdTick, RISING);
+    attachInterrupt(digitalPinToInterrupt(motor->sigPin[0]), firstTick, RISING);
+    attachInterrupt(digitalPinToInterrupt(motor->sigPin[1]), secondTick, RISING);
 }
 
 void Motor::firstTick(){
@@ -21,10 +21,5 @@ void Motor::firstTick(){
 
 void Motor::secondTick(){
     this->motor->angle = 1;
-    this->motor->lastTime = micros();
-}
-
-void Motor::thirdTick(){
-    this->motor->angle = 2;
     this->motor->lastTime = micros();
 }
