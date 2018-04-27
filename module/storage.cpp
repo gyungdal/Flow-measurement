@@ -12,6 +12,33 @@ void Storage::clear(){
     #endif
 }
 
+void Storage::saveSetting(eeprom_setting_t* setting){ 
+    auto eepromOffset = (EEPROM.length() - 1 - sizeof(eeprom_setting_t));
+    uint8_t* serializeBytes = new uint8_t[sizeof(eeprom_setting_t)];
+    #ifdef DEBUG
+        Serial.print("[INFO] Save Setting");
+        Serial.print(" Size : ");
+        Serial.println(sizeof(eeprom_setting_t));
+    #endif
+    memcpy(serializeBytes, setting, sizeof(eeprom_setting_t));
+    for(auto i = 0;i < sizeof(eeprom_setting_t);i++){
+        EEPROM.write(i + eepromOffset, serializeBytes[i]);
+    }
+    delete[] serializeBytes;
+}
+
+eeprom_setting_t* Storage::readSetting(){
+    auto eepromOffset = (EEPROM.length() - 1 - sizeof(eeprom_setting_t));
+    eeprom_setting_t* setting = new eeprom_setting_t;
+    uint8_t* serializeBytes = calloc(sizeof(uint8_t), sizeof(eeprom_setting_t));
+    for(int i = 0;i<sizeof(eeprom_setting_t);i++){
+        serializeBytes[i] = EEPROM.read((eepromOffset + i));
+    }
+    memcpy(setting, serializeBytes, sizeof(eeprom_setting_t));
+    delete[] serializeBytes;
+    return setting;
+}
+
 void Storage::set(eeprom_list_t* data){
     uint16_t bufferSize = (sizeof(eeprom_item_t) * data->length) + sizeof(uint8_t);
 

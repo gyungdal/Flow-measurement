@@ -12,6 +12,8 @@ class Storage{
         eeprom_list_t* get();
         void clear();
         void release(eeprom_list_t*);
+        void saveSetting(eeprom_setting_t*);
+        eeprom_setting_t* readSetting();
 };
 
 #endif

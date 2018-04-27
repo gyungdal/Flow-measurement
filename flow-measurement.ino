@@ -5,6 +5,8 @@
 #include "module/type.h"
 #include "module/storage.cpp"
 #include "module/rtc.cpp"
+#include "module/sensor.cpp"
+#include "module/motor.cpp"
 
 /*
     U8GLIB_ST7920_128X64_1X(sck, mosi, cs [, reset])
@@ -26,6 +28,8 @@ const int RTC_PIN = 13;
 //font 한개 사이즈 : 11
 
 Storage storage;
+Sensor sensor;
+Motor motor;
 
 user_t user;
 
@@ -237,6 +241,12 @@ static void injectionPerHourViewDraw(){
 
 //장전중
 static void loadingViewDraw(){
+    u8g.firstPage();
+    char* str = calloc(sizeof(char), 100);
+    while(u8g.nextPage()){
+        
+    }
+    delete[] str;
 }
 
 static void selectSensorViewDraw(){
@@ -284,8 +294,9 @@ void update(){
             runningViewDraw();
             break;
         }
-        default:
+        default:{
             break;
+        }
     }/*
     u8g.firstPage();
     while(u8g.nextPage()){

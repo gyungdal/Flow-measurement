@@ -38,6 +38,15 @@ typedef struct {
     };
 } eeprom_list_t;
 
+typedef struct {
+    motor_run_type_t type;
+    union {
+        uint32_t injectionPerHour;
+        uint32_t scale;
+    };
+    uint8_t sensorType;
+} eeprom_setting_t;
+
 //센서별 리터당 틱
 static const int sensor_tick[] = {   
     0, 0, 0, 0, 0, 0, 0  
@@ -87,9 +96,9 @@ static const uint32_t motor_scale_list[] = {
 };
 
 typedef enum {
+    NOT_RUN,
     RUN_BY_SCALE,
-    RUN_BY_INJECTION_PER_HOUR,
-    NOT_RUN
+    RUN_BY_INJECTION_PER_HOUR
 } motor_run_type_t;
 
 typedef struct {
