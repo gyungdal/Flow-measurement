@@ -6,11 +6,12 @@
 class Motor {
     public:
         void begin(motor_t*);
-    private:
-        motor_t* motor;
+        void run();
+        void release();
         void firstTick();
         void secondTick();
-        void thirdTick();
+    private:
+        motor_t* motor;
 }; 
 
 #endif

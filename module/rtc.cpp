@@ -1,6 +1,5 @@
 #include "rtc.h"
 
-#define AUTO_TIME
 
 RTC::RTC(int pin){
     this->clock.begin();

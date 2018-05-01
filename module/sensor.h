@@ -6,9 +6,9 @@
 class Sensor{
     public:
         void begin(sensor_t*);
+        void tickHandler();
     private:
         sensor_t* sensor;
-        void tickHandler();
 };
 
 #endif

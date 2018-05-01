@@ -1,4 +1,5 @@
 #include "motor.h"
+#include <Arduino.h>
 
 void Motor::begin(motor_t* motor){
     this->motor = motor;
@@ -9,9 +10,14 @@ void Motor::begin(motor_t* motor){
     for(uint8_t i = 0;i<2;i++){
         pinMode(this->motor->sigPin[i], INPUT_PULLUP);
     }
+}
 
-    attachInterrupt(digitalPinToInterrupt(motor->sigPin[0]), firstTick, RISING);
-    attachInterrupt(digitalPinToInterrupt(motor->sigPin[1]), secondTick, RISING);
+void Motor::run(){
+    analogWrite(this->motor->pwmPin, 255);
+}
+
+void Motor::release(){
+    analogWrite(this->motor->pwmPin, 0);
 }
 
 void Motor::firstTick(){

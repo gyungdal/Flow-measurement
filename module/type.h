@@ -38,15 +38,6 @@ typedef struct {
     };
 } eeprom_list_t;
 
-typedef struct {
-    motor_run_type_t type;
-    union {
-        uint32_t injectionPerHour;
-        uint32_t scale;
-    };
-    uint8_t sensorType;
-} eeprom_setting_t;
-
 //센서별 리터당 틱
 static const int sensor_tick[] = {   
     0, 0, 0, 0, 0, 0, 0  
@@ -82,7 +73,7 @@ typedef struct {
 } sensor_t;
 
 //motor 
-static const uint32_t motor_scale_list[] = {
+const uint32_t motor_scale_list[] = {
     33, 35, 40, 45, 50, 60, 70, 80, 90,
     100, 110, 120, 130, 140, 150, 160, 170, 180, 190,
     200, 250, 300, 350, 400, 450,
@@ -107,7 +98,6 @@ typedef struct {
         uint32_t injectionPerHour;
         uint32_t scale;
     };
-    
     inline uint32_t getScale(){
         return motor_scale_list[scale];
     }
@@ -183,18 +173,52 @@ typedef enum {
     INJECTION_PER_HOUR_MODE,
     SCALE_MODE,
     MEASURE_ONLY_WATER_MODE,
+    SET_CURRENT_TIME_MODE,
+    LOG_VIEW_MODE,
     NOTHING_MODE
 } mode_t;
 
+typedef enum {
+    TIME_YEAR,
+    TIME_MONTH,
+    TIME_DAY,
+    TIME_HOUR,
+    TIME_MINUTE,
+    TIME_DONE
+} time_item_e;
+
+typedef struct {
+    time_item_e index;
+    time_t time;
+} time_item_t;
 typedef struct {
     display_menu_t lastPage;
     display_menu_t nowPage;
     mode_t mode;
-    int8_t nowIndex;
-    uint8_t itemLength;
+    union{
+        struct{
+            int8_t nowIndex;
+            uint8_t itemLength;
+        };
+        struct{
+            eeprom_list_t hitory;
+            uint8_t historyIndex;
+        }
+        time_item_t time;
+    };
     int alertPin;
     motor_t motor;
     sensor_t sensor;
 } user_t;
 
+//eeprom 설정 저장
+typedef struct {
+    motor_run_type_t type;
+    union {
+        uint32_t injectionPerHour;
+        uint32_t scale;
+    };
+    bool forceRun;
+    uint8_t sensorType;
+} eeprom_setting_t;
 #endif  

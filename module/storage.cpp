@@ -30,13 +30,23 @@ void Storage::saveSetting(eeprom_setting_t* setting){
 eeprom_setting_t* Storage::readSetting(){
     auto eepromOffset = (EEPROM.length() - 1 - sizeof(eeprom_setting_t));
     eeprom_setting_t* setting = new eeprom_setting_t;
-    uint8_t* serializeBytes = calloc(sizeof(uint8_t), sizeof(eeprom_setting_t));
+    uint8_t* serializeBytes = (uint8_t*)calloc(sizeof(uint8_t), sizeof(eeprom_setting_t));
     for(int i = 0;i<sizeof(eeprom_setting_t);i++){
         serializeBytes[i] = EEPROM.read((eepromOffset + i));
     }
     memcpy(setting, serializeBytes, sizeof(eeprom_setting_t));
-    q32delete[] serializeBytes;
+    delete[] serializeBytes;
     return setting;
+}
+
+void Storage::clearHistory(){
+    uint8_t length = EEPROM.read(0);
+    EEPROM.write(0, 0);
+    for(uint16_t i = 0;i<length;i++){
+        for(uint8_t j = 0;j<sizeof(eeprom_item_t);j++){
+            EEPROM.write((sizeof(eeprom_item_t) * i) + j + 1, 0);
+        }
+    }
 }
 
 void Storage::set(eeprom_list_t* data){
