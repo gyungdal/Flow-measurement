@@ -5,6 +5,7 @@
 #include "module/type.h"
 #include "module/storage.cpp"
 #include "module/sensor.cpp"
+#include "module/rtc.cpp"
 #include "module/motor.cpp"
 
 #define DEBUG 1
@@ -30,7 +31,7 @@ const int RTC_PIN = 2;
 Storage storage;
 Sensor sensor;
 Motor motor;
-
+RTC rtc;
 
 user_t user;
 
@@ -42,7 +43,7 @@ static button_t buttons[] = {
     { .type = UP, .pin = 26, .lastState = LOW},
     { .type = DOWN, .pin = 27, .lastState = LOW}
 };
-/*
+
 static void dayHandler(){
     //EEPROM 에 저장된 리스트 Load
     eeprom_list_t* list = storage.get();
@@ -77,7 +78,7 @@ static void dayHandler(){
     delete[] list->items;
     delete list;
 }
-*/
+
 static liquid_amount_t lastAmount;
 
 static void secondTimer(){
@@ -120,21 +121,20 @@ static void sensorFirstPinInterrupt(){
 void setup() {
     Serial.begin(115200);
     Serial.println("[START]");
-    delay(100);
-  /*
+  
     user.sensor.sensorType = 0;
     user.sensor.pin = 3;
-    */
+    
     //EEPROM 정리
     #ifdef EEPROM_CLEAR
         storage.clear();
     #endif
-    /*
+    
     user.motor.type = NOT_RUN;
     user.motor.pwmPin = A0;
     user.motor.sigPin[0] = 18;
     user.motor.sigPin[1] = 19;
-*/
+
     sensor.begin(&user.sensor);
     #ifdef DEBUG
       Serial.println("[BEGIN] Sensor");
@@ -143,20 +143,22 @@ void setup() {
     #ifdef DEBUG
       Serial.println("[BEGIN] Motor");
     #endif
-    /*
+
+    attachInterrupt(digitalPinToInterrupt(RTC_PIN), 
+            sensorFirstPinInterrupt, RISING);
     attachInterrupt(digitalPinToInterrupt(user.motor.sigPin[0]), 
             motorFirstPinInterrupt, RISING);
     attachInterrupt(digitalPinToInterrupt(user.motor.sigPin[1]), 
             motorSecondPinInterrupt, RISING);
     attachInterrupt(digitalPinToInterrupt(user.sensor.pin), 
             sensorFirstPinInterrupt, RISING);
-            */
+            
     //1초 타이머 설정
     //Timer1.initialize(1000000);
     //Timer1.attachInterrupt(secondTimer);
 
     //RTC에서 오는 1일 마다 발생하는 타이머 설정 
-    //rtc.setDayHandler(dayHandler);
+    rtc.setDayHandler(dayHandler);
 
     //현재 페이지 설정 (MAIN_VIEW)
     user.lastPage = MAIN_VIEW;
@@ -427,6 +429,31 @@ void loop() {
                 switch(buttons[i].type){
                     case UP :{
                         switch(user.nowPage){
+                            case SET_CURRENT_TIME_VIEW : {
+                                switch(user.time.index){
+                                    case TIME_YEAR : {
+                                        user.time.time.year++;
+                                        break;
+                                    }
+                                    case TIME_MONTH : {
+                                        user.time.time.month++;
+                                        break;
+                                    }
+                                    case TIME_DAY : {
+                                        user.time.time.day++;
+                                        break;
+                                    }
+                                    case TIME_HOUR : {
+                                        user.time.time.hour++;
+                                        break;
+                                    }
+                                    case TIME_MINUTE : {
+                                        user.time.time.minute++;
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
                             case SELECT_LOAD_DRUG_VIEW : {
                                 user.nowPage = LOADING_DRUG_VIEW;
                                 break;
@@ -457,6 +484,10 @@ void loop() {
                             case INJECTION_PER_HOUR_VIEW : {
                                 if(user.motor.injectionPerHour < 5000)
                                     user.motor.injectionPerHour += 10;
+                                break;
+                            }
+                            case LOG_VIEW : {
+                                user.historyIndex -= (user.historyIndex > 0 ? 1 : 0);
                                 break;
                             }
                             default:
@@ -490,6 +521,31 @@ void loop() {
                     }
                     case DOWN:{
                         switch(user.nowPage){
+                            case SET_CURRENT_TIME_VIEW : {
+                                switch(user.time.index){
+                                    case TIME_YEAR : {
+                                        user.time.time.year--;
+                                        break;
+                                    }
+                                    case TIME_MONTH : {
+                                        user.time.time.month--;
+                                        break;
+                                    }
+                                    case TIME_DAY : {
+                                        user.time.time.day--;
+                                        break;
+                                    }
+                                    case TIME_HOUR : {
+                                        user.time.time.hour--;
+                                        break;
+                                    }
+                                    case TIME_MINUTE : {
+                                        user.time.time.minute--;
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
                             case SELECT_LOAD_DRUG_VIEW : {
                                 user.nowPage = RUNNING_IN_MODE_VIEW;
                                 break;
@@ -501,10 +557,9 @@ void loop() {
                             }
                             case SET_SCALE_VIEW : {
                                 user.motor.scale -= (user.motor.scale > 0 ? 1 : 0);
-                                update();
                                 break;
                             }
-                            case MODE_VIEW:{
+                            case MODE_VIEW : {
                                 user.nowIndex += (user.nowIndex < user.itemLength ? 1 : 0);
                                 break;
                             }
@@ -517,8 +572,13 @@ void loop() {
                                 user.nowPage = user.lastPage;
                                 break;
                             }
-                            default:
+                            case LOG_VIEW : {
+                                user.historyIndex += (user.historyIndex < (user.history->length) ? 1 : 0);
                                 break;
+                            }
+                            default : {
+                                break;
+                            }
                         }
                         update();
                         break;
@@ -531,6 +591,35 @@ void loop() {
                     }
                     case SAVE : {
                         switch(user.nowPage){
+                            case SET_CURRENT_TIME_VIEW : {
+                                switch(user.time.index){
+                                    case TIME_YEAR : {
+                                        user.time.index = TIME_MONTH;
+                                        break;
+                                    }
+                                    case TIME_MONTH : {
+                                        user.time.index = TIME_DAY;
+                                        break;
+                                    }
+                                    case TIME_DAY : {
+                                        user.time.index = TIME_HOUR;
+                                        break;
+                                    }
+                                    case TIME_HOUR : {
+                                        user.time.index = TIME_MINUTE;
+                                        break;
+                                    }
+                                    case TIME_MINUTE : {
+                                        user.time.index = TIME_DONE;
+                                        break;
+                                    }
+                                    case TIME_DONE : {                                   
+                                        rtc.set(user.time.time);
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
                             case SET_SCALE_VIEW : {
                                 user.motor.type = RUN_BY_SCALE;
                                 user.mode = SCALE_MODE;
@@ -575,21 +664,21 @@ void loop() {
                                     case 2 : {
                                         user.nowPage = LOG_VIEW;
                                         user.mode = LOG_VIEW_MODE;
-                                        user.historyIndex = 0;
+                                        user.historyIndex = -1;
+                                        user.history = storage.get();
                                         break;
                                     }
                                     
                                     //현재시간 설정
                                     case 3 : {
+                                        user.nowPage = SET_CURRENT_TIME_VIEW;
                                         user.mode = SET_CURRENT_TIME_MODE;
                                         user.time.index = TIME_YEAR;
                                         time_t* time = rtc.get();
                                         memcpy(&user.time.time, time, sizeof(time_t));
                                         delete time;
-                                        user.nowPage = SET_CURRENT_TIME_VIEW;
                                         break;
                                     }
-                                    
                                 }
                             }
                         }

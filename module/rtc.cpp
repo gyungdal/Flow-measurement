@@ -1,9 +1,9 @@
 #include "rtc.h"
 
 
-RTC::RTC(int pin){
+
+RTC::RTC(){
     this->clock.begin();
-    this->pin = pin;
     //활성화시 컴파일된 시간으로 RTC 모듈 초기화
     #ifdef AUTO_TIME
         this->clock.setDateTime(__DATE__, __TIME__);
@@ -13,7 +13,7 @@ RTC::RTC(int pin){
     this->clock.armAlarm2(false);
     this->clock.clearAlarm1();
     this->clock.clearAlarm2();
-
+    
     //매일 0시 0분 1초에 인터럽트 발생
     clock.setAlarm1(0, 0, 0, 1, DS3231_MATCH_H_M_S);
 }

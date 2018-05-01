@@ -191,6 +191,7 @@ typedef struct {
     time_item_e index;
     time_t time;
 } time_item_t;
+
 typedef struct {
     display_menu_t lastPage;
     display_menu_t nowPage;
@@ -201,9 +202,9 @@ typedef struct {
             uint8_t itemLength;
         };
         struct{
-            eeprom_list_t hitory;
+            eeprom_list_t* history;
             uint8_t historyIndex;
-        }
+        };
         time_item_t time;
     };
     int alertPin;
