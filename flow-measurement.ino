@@ -1,11 +1,12 @@
 #include <U8glib.h>
 #include <TimerOne.h>
+#include <Wire.h>
+#include <DS3231.h>
 
 #include "module/korean.h"
 #include "module/type.h"
 #include "module/storage.cpp"
 #include "module/sensor.cpp"
-#include "module/rtc.cpp"
 #include "module/motor.cpp"
 
 #define DEBUG 1
@@ -31,7 +32,7 @@ const int RTC_PIN = 2;
 Storage storage;
 Sensor sensor;
 Motor motor;
-RTC rtc;
+DS3231 clock;
 
 user_t user;
 
@@ -44,6 +45,27 @@ static button_t buttons[] = {
     { .type = DOWN, .pin = 27, .lastState = LOW}
 };
 
+
+void timeSet(time_t time){
+    // Manual (Year, Month, Day, Hour, Minute, Second)
+    // 지정한 시간으로 초기화 (초는 0으로 고정)
+    clock.setDateTime(time.year, time.month, time.day, time.hour, time.month, 0);
+}
+
+time_t* timeGet(){
+    //RTC 모듈에서 데이터 가져옴
+    RTCDateTime dt = clock.getDateTime();
+
+    //데이터 처리 형식에 맞게 가공
+    time_t* result = new time_t;
+    result->year = dt.year;
+    result->month = dt.month;
+    result->day = dt.day;
+    result->hour = dt.hour;
+    result->minute = dt.minute;
+    result->second = dt.second;
+    return result;
+}
 static void dayHandler(){
     //EEPROM 에 저장된 리스트 Load
     eeprom_list_t* list = storage.get();
@@ -64,7 +86,7 @@ static void dayHandler(){
     //센서 정보 초기화
     user.sensor.resetAmount();
 
-    time_t* time = rtc.get();
+    time_t* time = timeGet();
     list->items[list->length].time.year = time->year;
     list->items[list->length].time.month = time->month;
     list->items[list->length].time.day = time->day;
@@ -120,8 +142,10 @@ static void sensorFirstPinInterrupt(){
 
 void setup() {
     Serial.begin(115200);
-    Serial.println("[START]");
-  
+    u8g.setFont(u8g_font_7x14);
+    #ifdef DEBUG
+        Serial.println("[START]");
+    #endif
     user.sensor.sensorType = 0;
     user.sensor.pin = 3;
     
@@ -144,8 +168,28 @@ void setup() {
       Serial.println("[BEGIN] Motor");
     #endif
 
+    clock.begin();
+    //활성화시 컴파일된 시간으로 RTC 모듈 초기화
+    #ifdef AUTO_TIME
+        clock.setDateTime(__DATE__, __TIME__);
+    #endif
+    
+    clock.armAlarm1(false);
+    clock.armAlarm2(false);
+    clock.clearAlarm1();
+    clock.clearAlarm2();
+
+    //매일 0시 0분 1초에 인터럽트 발생
+    clock.setAlarm1(0, 0, 0, 1, DS3231_MATCH_H_M_S);
+
+    pinMode(RTC_PIN, INPUT_PULLUP);
+    pinMode(user.motor.sigPin[0], INPUT_PULLUP);
+    pinMode(user.motor.sigPin[1], INPUT_PULLUP);
+    pinMode(user.sensor.pin, INPUT_PULLUP);
+    
+    //RTC에서 오는 1일 마다 발생하는 타이머 설정 
     attachInterrupt(digitalPinToInterrupt(RTC_PIN), 
-            sensorFirstPinInterrupt, RISING);
+            dayHandler, RISING);
     attachInterrupt(digitalPinToInterrupt(user.motor.sigPin[0]), 
             motorFirstPinInterrupt, RISING);
     attachInterrupt(digitalPinToInterrupt(user.motor.sigPin[1]), 
@@ -157,8 +201,6 @@ void setup() {
     //Timer1.initialize(1000000);
     //Timer1.attachInterrupt(secondTimer);
 
-    //RTC에서 오는 1일 마다 발생하는 타이머 설정 
-    rtc.setDayHandler(dayHandler);
 
     //현재 페이지 설정 (MAIN_VIEW)
     user.lastPage = MAIN_VIEW;
@@ -178,7 +220,6 @@ static void mainViewDraw(){
     char* str = (char*)calloc(sizeof(char), 100);
     u8g.firstPage();
     while(u8g.nextPage()){
-        u8g.setFont(u8g_font_7x14);
         switch(user.motor.type){
             case RUN_BY_INJECTION_PER_HOUR : {
                 sprintf(str, " : %ucc", user.motor.injectionPerHour);
@@ -241,7 +282,6 @@ static void menuViewDraw(){
 static void setScaleViewDraw(){
     u8g.firstPage();
     char* str = (char*)calloc(sizeof(char), 100);
-    u8g.setFont(u8g_font_7x14);
     while(u8g.nextPage()){
         u8g.drawXBM(23, 19, DRUG_WATER_SCALE_XBM.width, DRUG_WATER_SCALE_XBM.height, DRUG_WATER_SCALE_XBM.value);
         sprintf(str, "%u", motor_scale_list[user.motor.scale]);
@@ -253,7 +293,6 @@ static void setScaleViewDraw(){
 //물약 장전 여부
 static void SelectLoadingDrugViewDraw(){
     u8g.firstPage();
-    u8g.setFont(u8g_font_7x14);
     while(u8g.nextPage()){
         u8g.drawXBM(36, 12, LOAD_DRUG_XBM.width, LOAD_DRUG_XBM.height, LOAD_DRUG_XBM.value);
         u8g.drawStr(86, 25, "?");
@@ -292,7 +331,6 @@ static void runningViewDraw(){
 //시간당 주입량 조절
 static void injectionPerHourViewDraw(){
     u8g.firstPage();
-    u8g.setFont(u8g_font_7x14);
     char* str = (char*)calloc(sizeof(char), 100);
     while(u8g.nextPage()){
         u8g.drawXBM(32, 19, INJECTION_PER_HOUR_XBM.width, INJECTION_PER_HOUR_XBM.height, INJECTION_PER_HOUR_XBM.value);
@@ -316,9 +354,18 @@ static void selectSensorViewDraw(){
 
 static void setCurrentTimeViewDraw(){
     u8g.firstPage();
+    char* str = (char*)calloc(sizeof(char), 100);
     while(u8g.nextPage()){
-
+        u8g.drawXBM(26, 12, SET_CURRENT_TIME_XBM.width, SET_CURRENT_TIME_XBM.height, SET_CURRENT_TIME_XBM.value);
+        sprintf(str, "%u/%u/%u %u:%u", user.time.time.year, user.time.time.month, user.time.time.day, 
+                            user.time.time.hour, user.time.time.minute);
+        u8g.drawStr(64 - (u8g.getStrWidth(str) / 2), 38, str);
+        if(user.time.index == TIME_DONE){
+            u8g.drawXBM(30, 38, SAVE_AFTER_SETTING_XBM.width, SAVE_AFTER_SETTING_XBM.height, SAVE_AFTER_SETTING_XBM.value);
+        }
     }
+    Serial.println("Draw Current Time");
+    delete[] str;
 }
 
 static void logViewDraw(){
@@ -436,19 +483,30 @@ void loop() {
                                         break;
                                     }
                                     case TIME_MONTH : {
-                                        user.time.time.month++;
+                                        user.time.time.month += (user.time.time.month <= 12 ? 1 : 0);
                                         break;
                                     }
                                     case TIME_DAY : {
-                                        user.time.time.day++;
+                                        const uint8_t dayLimitTable[] = {
+                                            31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
+                                        };
+                                        uint8_t dayLimit = dayLimitTable[user.time.time.month - 1];
+                                        if(user.time.time.month == 2){
+                                            if((user.time.time.year % 4 == 0 && 
+                                                    user.time.time.year % 100 != 0) 
+                                                        || user.time.time.year % 400 == 0){
+                                                dayLimit = 29;
+                                            }
+                                        }
+                                        user.time.time.day += (user.time.time.day <= dayLimit ? 1 : 0);
                                         break;
                                     }
                                     case TIME_HOUR : {
-                                        user.time.time.hour++;
+                                        user.time.time.hour += (user.time.time.hour <= 24 ? 1 : 0);
                                         break;
                                     }
                                     case TIME_MINUTE : {
-                                        user.time.time.minute++;
+                                        user.time.time.minute += (user.time.time.minute <= 60 ? 1 : 0);
                                         break;
                                     }
                                 }
@@ -524,23 +582,23 @@ void loop() {
                             case SET_CURRENT_TIME_VIEW : {
                                 switch(user.time.index){
                                     case TIME_YEAR : {
-                                        user.time.time.year--;
+                                        user.time.time.year++;
                                         break;
                                     }
                                     case TIME_MONTH : {
-                                        user.time.time.month--;
+                                        user.time.time.month -= (user.time.time.month > 1 ? 1 : 0);
                                         break;
                                     }
                                     case TIME_DAY : {
-                                        user.time.time.day--;
+                                        user.time.time.day -= (user.time.time.day > 1 ? 1 : 0);
                                         break;
                                     }
                                     case TIME_HOUR : {
-                                        user.time.time.hour--;
+                                        user.time.time.hour -= (user.time.time.hour > 0 ? 1 : 0);
                                         break;
                                     }
                                     case TIME_MINUTE : {
-                                        user.time.time.minute--;
+                                        user.time.time.minute -= (user.time.time.minute > 0 ? 1 : 0);
                                         break;
                                     }
                                 }
@@ -614,7 +672,7 @@ void loop() {
                                         break;
                                     }
                                     case TIME_DONE : {                                   
-                                        rtc.set(user.time.time);
+                                        timeSet(user.time.time);
                                         break;
                                     }
                                 }
@@ -674,9 +732,10 @@ void loop() {
                                         user.nowPage = SET_CURRENT_TIME_VIEW;
                                         user.mode = SET_CURRENT_TIME_MODE;
                                         user.time.index = TIME_YEAR;
-                                        time_t* time = rtc.get();
+                                        time_t* time = timeGet();
                                         memcpy(&user.time.time, time, sizeof(time_t));
                                         delete time;
+                                        update();
                                         break;
                                     }
                                 }

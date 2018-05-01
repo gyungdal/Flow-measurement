@@ -13,13 +13,9 @@ RTC::RTC(){
     this->clock.armAlarm2(false);
     this->clock.clearAlarm1();
     this->clock.clearAlarm2();
-    
+
     //매일 0시 0분 1초에 인터럽트 발생
     clock.setAlarm1(0, 0, 0, 1, DS3231_MATCH_H_M_S);
-}
-
-void RTC::setDayHandler(void (*dayHandler)()){
-    attachInterrupt(digitalPinToInterrupt(this->pin), dayHandler, RISING);
 }
 
 void RTC::set(time_t time){
