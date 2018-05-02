@@ -10,6 +10,7 @@
 #include "module/motor.cpp"
 
 #define DEBUG 1
+
 /*
     U8GLIB_ST7920_128X64_1X(sck, mosi, cs [, reset])
     Serial mode (PSB = LOW)
@@ -29,10 +30,11 @@ U8GLIB_ST7920_128X64_1X u8g(49);
 
 const int RTC_PIN = 2;
 
+DS3231 clock;
+
 Storage storage;
 Sensor sensor;
 Motor motor;
-DS3231 clock;
 
 user_t user;
 
@@ -66,7 +68,7 @@ time_t* timeGet(){
     result->second = dt.second;
     return result;
 }
-static void dayHandler(){
+static inline void dayHandler(){
     //EEPROM 에 저장된 리스트 Load
     eeprom_list_t* list = storage.get();
 
@@ -86,6 +88,13 @@ static void dayHandler(){
     //센서 정보 초기화
     user.sensor.resetAmount();
 
+    #ifdef NOT_USE_RTC     
+    list->items[list->length].time.year = 2018;
+    list->items[list->length].time.month = 5;
+    list->items[list->length].time.day = 2;
+    list->items[list->length].time.hour = 20;
+    list->items[list->length].time.minute = 30;
+    #else
     time_t* time = timeGet();
     list->items[list->length].time.year = time->year;
     list->items[list->length].time.month = time->month;
@@ -93,7 +102,7 @@ static void dayHandler(){
     list->items[list->length].time.hour = time->hour;
     list->items[list->length].time.minute = time->minute;
     delete time;
-
+    #endif
     list->length += 1;
     storage.set(list);
 
@@ -103,7 +112,7 @@ static void dayHandler(){
 
 static liquid_amount_t lastAmount;
 
-static void secondTimer(){
+static inline void secondTimer(){
     //모터에서 몇초간 신호가 오지 않았는지 계산
     uint64_t diff;
     uint64_t micro = micros();
@@ -128,15 +137,15 @@ static void secondTimer(){
     lastAmount = nowAmount;
 }
 
-static void motorFirstPinInterrupt(){
+static inline void motorFirstPinInterrupt(){
     motor.firstTick();
 }
 
-static void motorSecondPinInterrupt(){
+static inline void motorSecondPinInterrupt(){
     motor.secondTick();
 }
 
-static void sensorFirstPinInterrupt(){
+static inline void sensorFirstPinInterrupt(){
     sensor.tickHandler();
 }
 
@@ -208,6 +217,7 @@ void setup() {
         pinMode(buttons[i].pin, INPUT);
     }
 
+    u8g.setFont(u8g_font_7x14);
     update();
     #ifdef DEBUG
         Serial.println("[DEBUG] DRAW SETUP");
@@ -215,250 +225,201 @@ void setup() {
 }
 
 //메인
-static void mainViewDraw(){
+static inline void mainViewDraw(){
     char* str = (char*)calloc(sizeof(char), 100);
-    u8g.firstPage();
-    u8g.setFont(u8g_font_7x14);
-    while(u8g.nextPage()){
-        switch(user.motor.type){
-            case RUN_BY_INJECTION_PER_HOUR : {
-                sprintf(str, " : %ucc", user.motor.injectionPerHour);
-                u8g.drawStr(PER_HOUR_XBM.width, 18, str);
-                u8g.drawXBM(0, 6, PER_HOUR_XBM.width, PER_HOUR_XBM.height, PER_HOUR_XBM.value);
-                break;
-            }
-            case RUN_BY_SCALE : {
-                sprintf(str, " : 1/%d", motor_scale_list[user.motor.scale]);
-                u8g.drawStr(WATER_SCALE_XBM.width, 18, str);
-                u8g.drawXBM(0, 6, WATER_SCALE_XBM.width, WATER_SCALE_XBM.height, WATER_SCALE_XBM.value);
-                break;
-            }
-            case NOT_RUN : {
-                u8g.drawXBM(0, 6, MEASURE_ONLY_WATER_XBM.width, MEASURE_ONLY_WATER_XBM.height, MEASURE_ONLY_WATER_XBM.value);
-                break;
-            }
+    switch(user.motor.type){
+        case RUN_BY_INJECTION_PER_HOUR : {
+            sprintf(str, " : %ucc", user.motor.injectionPerHour);
+            u8g.drawStr(PER_HOUR_XBM.width, 18, str);
+            u8g.drawXBM(0, 6, PER_HOUR_XBM.width, PER_HOUR_XBM.height, PER_HOUR_XBM.value);
+            break;
         }
-        u8g.drawXBM(0, 19, WATER_SPEED_XBM.width, WATER_SPEED_XBM.height, WATER_SPEED_XBM.value);
-        u8g.drawXBM(0, 32, WATER_COUNT_XBM.width, WATER_COUNT_XBM.height, WATER_COUNT_XBM.value);
-        u8g.drawXBM(0, 45, SENSOR_XBM.width, SENSOR_XBM.height, SENSOR_XBM.value);
-
-        memset(str, 0x00, 100);
-        sprintf(str, " : %dL/h", user.sensor.waterPerHour);
-        u8g.drawStr(24, 31, str);
-        memset(str, 0x00, 100);
-        sprintf(str, " : %dL", user.sensor.liter);
-        u8g.drawStr(36, 44, str);
-        memset(str, 0x00, 100);
-        sprintf(str, " : %u", user.sensor.sensorType);
-        u8g.drawStr(24, 57, str);   
+        case RUN_BY_SCALE : {
+            sprintf(str, " : 1/%d", motor_scale_list[user.motor.scale]);
+            u8g.drawStr(WATER_SCALE_XBM.width, 18, str);
+            u8g.drawXBM(0, 6, WATER_SCALE_XBM.width, WATER_SCALE_XBM.height, WATER_SCALE_XBM.value);
+            break;
+        }
+        case NOT_RUN : {
+            u8g.drawXBM(0, 6, MEASURE_ONLY_WATER_XBM.width, MEASURE_ONLY_WATER_XBM.height, MEASURE_ONLY_WATER_XBM.value);
+            break;
+        }
     }
+    u8g.drawXBM(0, 19, WATER_SPEED_XBM.width, WATER_SPEED_XBM.height, WATER_SPEED_XBM.value);
+    u8g.drawXBM(0, 32, WATER_COUNT_XBM.width, WATER_COUNT_XBM.height, WATER_COUNT_XBM.value);
+    u8g.drawXBM(0, 45, SENSOR_XBM.width, SENSOR_XBM.height, SENSOR_XBM.value);
+
+    memset(str, 0x00, 100);
+    sprintf(str, " : %dL/h", user.sensor.waterPerHour);
+    u8g.drawStr(24, 31, str);
+    memset(str, 0x00, 100);
+    sprintf(str, " : %dL", user.sensor.liter);
+    u8g.drawStr(36, 44, str);
+    memset(str, 0x00, 100);
+    sprintf(str, " : %u", user.sensor.sensorType);
+    u8g.drawStr(24, 57, str);   
+    
     delete[] str;
 }
 
 //메뉴 
-static void menuViewDraw(){
-    u8g.firstPage();
+static inline void menuViewDraw(){
     xbm_t* list = new xbm_t[4];
     list[0] = INJECTION_PER_HOUR_XBM;
     list[1] = MEASURE_ONLY_WATER_XBM;
     list[2] = AMOUNT_BY_DAY_XBM;
     list[3] = SET_CURRENT_TIME_XBM;
 
-    while(u8g.nextPage()){
-        for(uint8_t i = 0;i < user.itemLength + 1;i++){
-            u8g.setDefaultForegroundColor();
-            if(user.nowIndex == i){
-                u8g.drawBox(0, 6 + (13 * i), 128, 13);
-                u8g.setDefaultBackgroundColor();
-            }
-            u8g.drawXBM(0, 6 + (13 * i), list[i].width, list[i].height, list[i].value);
+    for(uint8_t i = 0;i < user.itemLength + 1;i++){
+        u8g.setDefaultForegroundColor();
+        if(user.nowIndex == i){
+            u8g.drawBox(0, 6 + (13 * i), 128, 13);
+            u8g.setDefaultBackgroundColor();
         }
+        u8g.drawXBM(0, 6 + (13 * i), list[i].width, list[i].height, list[i].value);
     }
+
 
     delete[] list;
 }
 
 //시간당 비율 설정 뷰
-static void setScaleViewDraw(){
-    u8g.firstPage();
+static inline void setScaleViewDraw(){
     char* str = (char*)calloc(sizeof(char), 100);
-    u8g.setFont(u8g_font_7x14);
-    while(u8g.nextPage()){
-        u8g.drawXBM(23, 19, DRUG_WATER_SCALE_XBM.width, DRUG_WATER_SCALE_XBM.height, DRUG_WATER_SCALE_XBM.value);
-        sprintf(str, "%u", motor_scale_list[user.motor.scale]);
-        u8g.drawStr(64 - (u8g.getStrWidth(str) / 2), 46, str);
-    }
+    u8g.drawXBM(23, 19, DRUG_WATER_SCALE_XBM.width, DRUG_WATER_SCALE_XBM.height, DRUG_WATER_SCALE_XBM.value);
+    sprintf(str, "%u", motor_scale_list[user.motor.scale]);
+    u8g.drawStr(64 - (u8g.getStrWidth(str) / 2), 46, str);
     delete[] str;
 }
 
 //물약 장전 여부
-static void SelectLoadingDrugViewDraw(){
-    u8g.firstPage();
-    u8g.setFont(u8g_font_7x14);
-    while(u8g.nextPage()){
-        u8g.drawXBM(36, 12, LOAD_DRUG_XBM.width, LOAD_DRUG_XBM.height, LOAD_DRUG_XBM.value);
-        u8g.drawStr(86, 25, "?");
-        u8g.drawXBM(46, 25, YES_XBM.width, YES_XBM.height, YES_XBM.value);
-        u8g.drawXBM(34, 41, NO_XBM.width, NO_XBM.height, NO_XBM.value);
-    }
+static inline void SelectLoadingDrugViewDraw(){
+    u8g.drawXBM(36, 12, LOAD_DRUG_XBM.width, LOAD_DRUG_XBM.height, LOAD_DRUG_XBM.value);
+    u8g.drawStr(86, 25, "?");
+    u8g.drawXBM(46, 25, YES_XBM.width, YES_XBM.height, YES_XBM.value);
+    u8g.drawXBM(34, 41, NO_XBM.width, NO_XBM.height, NO_XBM.value);
 }
 
 //물약 장전 중지
-static void stopLoadingDrugViewDraw(){
-    u8g.firstPage();
-    while(u8g.nextPage()){
-        u8g.drawXBM(32, 19, LOAD_DRUG_XBM.width, LOAD_DRUG_XBM.height, LOAD_DRUG_XBM.value);
-        u8g.drawXBM(84, 19, ING_XBM.width, ING_XBM.height, ING_XBM.value);
-        u8g.drawXBM(40, 46, STOP_XBM.width, STOP_XBM.height, STOP_XBM.value);
-    }
+static inline void stopLoadingDrugViewDraw(){
+    u8g.drawXBM(32, 19, LOAD_DRUG_XBM.width, LOAD_DRUG_XBM.height, LOAD_DRUG_XBM.value);
+    u8g.drawXBM(84, 19, ING_XBM.width, ING_XBM.height, ING_XBM.value);
+    u8g.drawXBM(40, 46, STOP_XBM.width, STOP_XBM.height, STOP_XBM.value);
 }
 
 //~~모드로 동작
-static void runningViewDraw(){
+static inline void runningViewDraw(){
     xbm_t* list = new xbm_t[3];
     list[0] = INJECTION_PER_HOUR_XBM;
     list[1] = DRUG_WATER_SCALE_XBM;
     list[2] = MEASURE_ONLY_WATER_XBM;
-    u8g.firstPage();
-    while(u8g.nextPage()){
-        u8g.drawXBM(0, 19, list[user.mode].width, list[user.mode].height, list[user.mode].value);
-        u8g.drawXBM(0, 32, RUNNING_IN_MODE_XBM.width, RUNNING_IN_MODE_XBM.height, RUNNING_IN_MODE_XBM.value);
-    }
+    u8g.drawXBM(0, 19, list[user.mode].width, list[user.mode].height, list[user.mode].value);
+    u8g.drawXBM(0, 32, RUNNING_IN_MODE_XBM.width, RUNNING_IN_MODE_XBM.height, RUNNING_IN_MODE_XBM.value);
     user.nowPage = MAIN_VIEW;
     user.mode = NOTHING_MODE;
     delete[] list;
     delay(300);
+    update();
 }
 
 //시간당 주입량 조절
-static void injectionPerHourViewDraw(){
-    u8g.firstPage();
+static inline void injectionPerHourViewDraw(){
     char* str = (char*)calloc(sizeof(char), 100);
-    u8g.setFont(u8g_font_7x14);
-    while(u8g.nextPage()){
-        u8g.drawXBM(32, 19, INJECTION_PER_HOUR_XBM.width, INJECTION_PER_HOUR_XBM.height, INJECTION_PER_HOUR_XBM.value);
-        sprintf(str, "%u", user.motor.injectionPerHour);
-        u8g.drawStr(64 - (u8g.getStrWidth(str) / 2), 46, str);
-    }
+    u8g.drawXBM(32, 19, INJECTION_PER_HOUR_XBM.width, INJECTION_PER_HOUR_XBM.height, INJECTION_PER_HOUR_XBM.value);
+    sprintf(str, "%u", user.motor.injectionPerHour);
+    u8g.drawStr(64 - (u8g.getStrWidth(str) / 2), 46, str);
     delete[] str;
 }
 
 //센서 선택
-static void selectSensorViewDraw(){
-    u8g.firstPage();
-    u8g.setFont(u8g_font_7x14);
+static inline void selectSensorViewDraw(){
+    
     char* str = (char*)calloc(sizeof(char), 100);
-    while(u8g.nextPage()){
-        u8g.drawXBM(23, 19, SELECT_SENSOR_TYPE_XBM.width, SELECT_SENSOR_TYPE_XBM.height, SELECT_SENSOR_TYPE_XBM.value);
-        sprintf(str, "%u", user.sensor.sensorType);
-        u8g.drawStr(64 - (u8g.getStrWidth(str) / 2), 46, str);
-    }
+    u8g.drawXBM(23, 19, SELECT_SENSOR_TYPE_XBM.width, SELECT_SENSOR_TYPE_XBM.height, SELECT_SENSOR_TYPE_XBM.value);
+    sprintf(str, "%u", user.sensor.sensorType);
+    u8g.drawStr(64 - (u8g.getStrWidth(str) / 2), 46, str);
     delete[] str;
 }
 
-static void setCurrentTimeViewDraw(){
-    u8g.firstPage();
-    u8g.setFont(u8g_font_7x14);
-    char* str = (char*)calloc(sizeof(char), 100);
-    while(u8g.nextPage()){
-        u8g.drawXBM(26, 12, SET_CURRENT_TIME_XBM.width, SET_CURRENT_TIME_XBM.height, SET_CURRENT_TIME_XBM.value);
-        sprintf(str, "%u/%u/%u %u:%u", user.time.time.year, user.time.time.month, user.time.time.day, 
-                            user.time.time.hour, user.time.time.minute);
-        u8g.drawStr(64 - (u8g.getStrWidth(str) / 2), 38, str);
-        if(user.time.index == TIME_DONE){
-            u8g.drawXBM(30, 38, SAVE_AFTER_SETTING_XBM.width, SAVE_AFTER_SETTING_XBM.height, SAVE_AFTER_SETTING_XBM.value);
-        }
-    }
+static inline void setCurrentTimeViewDraw(){   
     Serial.println("Draw Current Time");
+    #ifndef NOT_USE_RTC
+    char* str = (char*)calloc(sizeof(char), 100);
+    u8g.drawXBM(26, 12, SET_CURRENT_TIME_XBM.width, SET_CURRENT_TIME_XBM.height, SET_CURRENT_TIME_XBM.value);
+    sprintf(str, "%u/%u/%u %u:%u", user.time.time.year, user.time.time.month, user.time.time.day, 
+                        user.time.time.hour, user.time.time.minute);
+    u8g.drawStr(64 - (u8g.getStrWidth(str) / 2), 38, str);
+    if(user.time.index == TIME_DONE){
+        u8g.drawXBM(30, 38, SAVE_AFTER_SETTING_XBM.width, SAVE_AFTER_SETTING_XBM.height, SAVE_AFTER_SETTING_XBM.value);
+    }
     delete[] str;
+    #else
+        u8g.drawXBM(26, 12, SET_CURRENT_TIME_XBM.width, SET_CURRENT_TIME_XBM.height, SET_CURRENT_TIME_XBM.value);
+        u8g.drawStr(64 - (u8g.getStrWidth("2018/05/02 13:49") / 2), 38, "2018/05/02 13:49");
+        u8g.drawXBM(30, 38, SAVE_AFTER_SETTING_XBM.width, SAVE_AFTER_SETTING_XBM.height, SAVE_AFTER_SETTING_XBM.value);
+    #endif
 }
 
-static void logViewDraw(){
-    u8g.firstPage();
-    while(u8g.nextPage()){
-        
-    }
+static inline void logViewDraw(){
+    u8g.drawXBM(32, 19, LOAD_DRUG_XBM.width, LOAD_DRUG_XBM.height, LOAD_DRUG_XBM.value);
+    u8g.drawXBM(84, 19, ING_XBM.width, ING_XBM.height, ING_XBM.value);
+    u8g.drawXBM(40, 46, STOP_XBM.width, STOP_XBM.height, STOP_XBM.value);
 }
 
 void update(){
-    switch(user.nowPage){
-        case MAIN_VIEW:
-            mainViewDraw();
-            break;
-        case MODE_VIEW:
-            menuViewDraw();
-            break;
-        case SET_SCALE_VIEW : 
-            setScaleViewDraw();
-            break;
-        case INJECTION_PER_HOUR_VIEW : {
-            injectionPerHourViewDraw();
-            break;
-        }
-        case LOG_VIEW : {
-            logViewDraw();
-            break;
-        }
-        case SET_CURRENT_TIME_VIEW : {
-            setCurrentTimeViewDraw();
-            break;
-        }
-        case SELECT_LOAD_DRUG_VIEW : {
-            SelectLoadingDrugViewDraw();
-            break;
-        }
-        case LOADING_DRUG_VIEW : {
-            stopLoadingDrugViewDraw();
-            break;
-        }
-        case SELECT_SENSOR_VIEW : {
-            selectSensorViewDraw();
-            break;
-        }
-        case CLEAR_COUNT_VIEW: {
-            u8g.firstPage();
-            while(u8g.nextPage()){
+    u8g.firstPage();
+    while(u8g.nextPage()){
+        switch(user.nowPage){
+            case MAIN_VIEW : {
+                mainViewDraw();
+                break;
+            }
+            case MODE_VIEW : {
+                menuViewDraw();
+                break;
+            }case SET_SCALE_VIEW : {
+                setScaleViewDraw();
+                break;
+            }
+            case INJECTION_PER_HOUR_VIEW : {
+                injectionPerHourViewDraw();
+                break;
+            }
+            case LOG_VIEW : {
+                logViewDraw();
+                break;
+            }
+            case SET_CURRENT_TIME_VIEW : {
+                setCurrentTimeViewDraw();
+                break;
+            }
+            case SELECT_LOAD_DRUG_VIEW : {
+                SelectLoadingDrugViewDraw();
+                break;
+            }
+            case LOADING_DRUG_VIEW : {
+                stopLoadingDrugViewDraw();
+                break;
+            }
+            case SELECT_SENSOR_VIEW : {
+                selectSensorViewDraw();
+                break;
+            }
+            case CLEAR_COUNT_VIEW: {
                 u8g.drawXBM(0, 0, CLEAR_COUNT_XBM.width, CLEAR_COUNT_XBM.height, CLEAR_COUNT_XBM.value);
                 u8g.drawXBM(0, 24, YES_XBM.width, YES_XBM.height, YES_XBM.value);
                 u8g.drawXBM(0, 48, NO_XBM.width, NO_XBM.height, NO_XBM.value);
+                break;
             }
-            break;
-        }
-        case RUNNING_IN_MODE_VIEW : {
-            runningViewDraw();
-            break;
-        }
-        default:{
-            break;
-        }
-    }/*
-    u8g.firstPage();
-    while(u8g.nextPage()){
-        uint8_t i, h;
-        u8g_uint_t w, d;
-
-        u8g.setFont(u8g_font_6x13);
-        u8g.setFontRefHeightText();
-        u8g.setFontPosTop();
-
-        h = u8g.getFontAscent() - u8g.getFontDescent();
-        w = u8g.getWidth();
-
-        uint8_t space = (64 - (h * frame.length));
-        char* str = new char[100];
-        for( i = 0; i < frame.length; i++) {
-            memset(str, 0x00, sizeof(str) / sizeof(char));
-            //sprintf(str, "%s : %s", frame[i].name, frame[i].str);
-            d = (w-u8g.getStrWidth(str))/2;
-            u8g.setDefaultForegroundColor();
-            if (frame.items[i].nowSelect) {
-                u8g.drawBox(0, space + i * h + 1, w, h);
-                u8g.setDefaultBackgroundColor();
+            case RUNNING_IN_MODE_VIEW : {
+                runningViewDraw();
+                break;
             }
-            u8g.drawStr(d, space + i * h, str);
+            default:{
+                break;
+            }
         }
-        delete[] str;
-    }*/
+    }
 }
 
 void loop() {  
@@ -470,7 +431,6 @@ void loop() {
                 uint64_t diffTime = millis() - buttons[i].lastTime;
                 if(diffTime < 120)
                     continue;
-                #define DEBUG
                 #ifdef DEBUG
                     Serial.print("[PUSH] ");
                     Serial.print(buttons[i].pin);
@@ -532,7 +492,6 @@ void loop() {
                             }
                             case SET_SCALE_VIEW : {
                                 user.motor.scale += (user.motor.scale < 73 ? 1 : 0);
-                                update();
                                 break;
                             }
                             case MODE_VIEW:{
@@ -561,6 +520,13 @@ void loop() {
                     }
                     case MODE : {
                         switch(user.nowPage){
+                            case LOG_VIEW : {
+                                user.nowPage = MAIN_VIEW;
+                                user.mode = NOTHING_MODE;
+                                user.historyIndex = -1;
+                                delete user.history;
+                                break;
+                            }
                             case MAIN_VIEW : {
                                 if(diffTime < 3000){
                                     user.mode = NOTHING_MODE;
@@ -698,6 +664,8 @@ void loop() {
                                 break;
                             }
                             case MODE_VIEW : {
+                                Serial.print("[index]");
+                                Serial.println(user.nowIndex);
                                 switch(user.nowIndex){
                                     case -1 :{
                                         user.nowPage = MAIN_VIEW;
@@ -737,15 +705,26 @@ void loop() {
                                         user.nowPage = SET_CURRENT_TIME_VIEW;
                                         user.mode = SET_CURRENT_TIME_MODE;
                                         user.time.index = TIME_YEAR;
-                                        time_t* time = timeGet();
-                                        memcpy(&user.time.time, time, sizeof(time_t));
-                                        delete time;
-                                        update();
+                            
+                            
+                                        #ifdef NOT_USE_RTC 
+                                            user.time.time.year = 2018;
+                                            user.time.time.month = 5;
+                                            user.time.time.day = 2;
+                                            user.time.time.hour = 20;
+                                            user.time.time.minute = 59;
+                                        #else
+                                            time_t* temp = timeGet();
+                                            memcpy(&user.time.time, temp, sizeof(time_t));
+                                            delete temp;
+                                        #endif
                                         break;
                                     }
                                 }
+                                break;
                             }
                         }
+                        break;
                     }
                     case ZERO : {
                         //3초 이상 누른 경우
@@ -756,12 +735,12 @@ void loop() {
                         break;
                     }
                 }
-                update();
             }
             buttons[i].lastTime = millis();
             buttons[i].lastState = state;
         }
     }
-    if(beforePage != user.nowPage)
+    if(beforePage != user.nowPage){
         update();
+    }
 }
