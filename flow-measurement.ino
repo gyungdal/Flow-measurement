@@ -217,7 +217,6 @@ void setup() {
         pinMode(buttons[i].pin, INPUT);
     }
 
-    u8g.setFont(u8g_font_7x14);
     update();
     #ifdef DEBUG
         Serial.println("[DEBUG] DRAW SETUP");
@@ -343,20 +342,48 @@ static inline void selectSensorViewDraw(){
 
 static inline void setCurrentTimeViewDraw(){   
     Serial.println("Draw Current Time");
-    #ifndef NOT_USE_RTC
+    #ifdef NOT_USE_RTC
+    u8g.drawXBM(23, 12, SET_CURRENT_TIME_XBM.width, SET_CURRENT_TIME_XBM.height, SET_CURRENT_TIME_XBM.value);
+    u8g.drawStr(64 - (u8g.getStrWidth("2018/05/02 13:49") / 2), 38, "2018/05/02 13:49");
+    u8g.drawXBM(30, 38, SAVE_AFTER_SETTING_XBM.width, SAVE_AFTER_SETTING_XBM.height, SAVE_AFTER_SETTING_XBM.value);
+    
+    #else
     char* str = (char*)calloc(sizeof(char), 100);
-    u8g.drawXBM(26, 12, SET_CURRENT_TIME_XBM.width, SET_CURRENT_TIME_XBM.height, SET_CURRENT_TIME_XBM.value);
+    u8g.drawXBM(23, 12, SET_CURRENT_TIME_XBM.width, SET_CURRENT_TIME_XBM.height, SET_CURRENT_TIME_XBM.value);
     sprintf(str, "%u/%u/%u %u:%u", user.time.time.year, user.time.time.month, user.time.time.day, 
                         user.time.time.hour, user.time.time.minute);
+    Serial.println(str);
     u8g.drawStr(64 - (u8g.getStrWidth(str) / 2), 38, str);
-    if(user.time.index == TIME_DONE){
-        u8g.drawXBM(30, 38, SAVE_AFTER_SETTING_XBM.width, SAVE_AFTER_SETTING_XBM.height, SAVE_AFTER_SETTING_XBM.value);
+    switch(user.time.index){
+        case TIME_YEAR : {
+            sprintf(str, "YEAR SETTING");
+            break;
+        }
+        case TIME_MONTH : {
+            sprintf(str, "MONTH SETTING");
+            break;
+        }
+        case TIME_DAY : {
+            sprintf(str, "DAY SETTING");
+            break;
+        }
+        case TIME_HOUR : {
+            sprintf(str, "HOUR SETTING");
+            break;
+        }
+        case TIME_MINUTE : {
+            sprintf(str, "MINUTE SETTING");
+            break;
+        }
+        case TIME_DONE : {
+            u8g.drawXBM(30, 38, SAVE_AFTER_SETTING_XBM.width, SAVE_AFTER_SETTING_XBM.height, SAVE_AFTER_SETTING_XBM.value);
+            break;
+        }
+    }
+    if(user.time.index != TIME_DONE){
+        u8g.drawStr(64 - (u8g.getStrWidth(str) / 2), 51, str);
     }
     delete[] str;
-    #else
-        u8g.drawXBM(26, 12, SET_CURRENT_TIME_XBM.width, SET_CURRENT_TIME_XBM.height, SET_CURRENT_TIME_XBM.value);
-        u8g.drawStr(64 - (u8g.getStrWidth("2018/05/02 13:49") / 2), 38, "2018/05/02 13:49");
-        u8g.drawXBM(30, 38, SAVE_AFTER_SETTING_XBM.width, SAVE_AFTER_SETTING_XBM.height, SAVE_AFTER_SETTING_XBM.value);
     #endif
 }
 
@@ -368,6 +395,7 @@ static inline void logViewDraw(){
 
 void update(){
     u8g.firstPage();
+    u8g.setFont(u8g_font_7x14);
     while(u8g.nextPage()){
         switch(user.nowPage){
             case MAIN_VIEW : {
@@ -448,7 +476,7 @@ void loop() {
                                         break;
                                     }
                                     case TIME_MONTH : {
-                                        user.time.time.month += (user.time.time.month <= 12 ? 1 : 0);
+                                        user.time.time.month += (user.time.time.month < 12 ? 1 : 0);
                                         break;
                                     }
                                     case TIME_DAY : {
@@ -463,15 +491,15 @@ void loop() {
                                                 dayLimit = 29;
                                             }
                                         }
-                                        user.time.time.day += (user.time.time.day <= dayLimit ? 1 : 0);
+                                        user.time.time.day += (user.time.time.day < dayLimit ? 1 : 0);
                                         break;
                                     }
                                     case TIME_HOUR : {
-                                        user.time.time.hour += (user.time.time.hour <= 24 ? 1 : 0);
+                                        user.time.time.hour += (user.time.time.hour < 23 ? 1 : 0);
                                         break;
                                     }
                                     case TIME_MINUTE : {
-                                        user.time.time.minute += (user.time.time.minute <= 60 ? 1 : 0);
+                                        user.time.time.minute += (user.time.time.minute < 59 ? 1 : 0);
                                         break;
                                     }
                                 }
@@ -532,8 +560,8 @@ void loop() {
                                     user.mode = NOTHING_MODE;
                                     user.lastPage = user.nowPage;
                                     user.nowPage = MODE_VIEW;
-                                    user.nowIndex = -1;
-                                    user.itemLength = 3;
+                                    user.nowIndex = 0;
+                                    user.itemLength = 4;
                                 }else{
                                     user.mode = NOTHING_MODE;
                                     user.nowPage = SELECT_SENSOR_VIEW;
@@ -553,7 +581,7 @@ void loop() {
                             case SET_CURRENT_TIME_VIEW : {
                                 switch(user.time.index){
                                     case TIME_YEAR : {
-                                        user.time.time.year++;
+                                        user.time.time.year--;
                                         break;
                                     }
                                     case TIME_MONTH : {
@@ -589,7 +617,7 @@ void loop() {
                                 break;
                             }
                             case MODE_VIEW : {
-                                user.nowIndex += (user.nowIndex < user.itemLength ? 1 : 0);
+                                user.nowIndex += (user.nowIndex < (user.itemLength - 1) ? 1 : 0);
                                 break;
                             }
                             case INJECTION_PER_HOUR_VIEW : {
@@ -667,11 +695,6 @@ void loop() {
                                 Serial.print("[index]");
                                 Serial.println(user.nowIndex);
                                 switch(user.nowIndex){
-                                    case -1 :{
-                                        user.nowPage = MAIN_VIEW;
-                                        user.nowIndex = user.itemLength = 0;
-                                        break;
-                                    }
 
                                     //시간당 주입
                                     case 0 :{
@@ -691,21 +714,12 @@ void loop() {
                                         break;
                                     }
                                     
-                                    //날짜별 음수량
-                                    case 2 : {
-                                        user.nowPage = LOG_VIEW;
-                                        user.mode = LOG_VIEW_MODE;
-                                        user.historyIndex = -1;
-                                        user.history = storage.get();
-                                        break;
-                                    }
-                                    
                                     //현재시간 설정
+                                    case 2 : 
                                     case 3 : {
                                         user.nowPage = SET_CURRENT_TIME_VIEW;
                                         user.mode = SET_CURRENT_TIME_MODE;
                                         user.time.index = TIME_YEAR;
-                            
                             
                                         #ifdef NOT_USE_RTC 
                                             user.time.time.year = 2018;
@@ -720,6 +734,17 @@ void loop() {
                                         #endif
                                         break;
                                     }
+                                    
+                                    /*
+                                    //날짜별 음수량
+                                    case 2 : {
+                                        user.nowPage = LOG_VIEW;
+                                        user.mode = LOG_VIEW_MODE;
+                                        user.historyIndex = -1;
+                                        user.history = storage.get();
+                                        break;
+                                    }
+                                    */
                                 }
                                 break;
                             }

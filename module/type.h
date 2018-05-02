@@ -185,10 +185,10 @@ typedef enum {
     TIME_HOUR,
     TIME_MINUTE,
     TIME_DONE
-} time_item_e;
+} time_index_t;
 
 typedef struct {
-    time_item_e index;
+    time_index_t index;
     time_t time;
 } time_item_t;
 
@@ -198,7 +198,7 @@ typedef struct {
     mode_t mode;
     union{
         struct{
-            int8_t nowIndex;
+            uint8_t nowIndex;
             uint8_t itemLength;
         };
         struct{
