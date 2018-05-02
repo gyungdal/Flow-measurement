@@ -142,7 +142,6 @@ static void sensorFirstPinInterrupt(){
 
 void setup() {
     Serial.begin(115200);
-    u8g.setFont(u8g_font_7x14);
     #ifdef DEBUG
         Serial.println("[START]");
     #endif
@@ -219,6 +218,7 @@ void setup() {
 static void mainViewDraw(){
     char* str = (char*)calloc(sizeof(char), 100);
     u8g.firstPage();
+    u8g.setFont(u8g_font_7x14);
     while(u8g.nextPage()){
         switch(user.motor.type){
             case RUN_BY_INJECTION_PER_HOUR : {
@@ -282,6 +282,7 @@ static void menuViewDraw(){
 static void setScaleViewDraw(){
     u8g.firstPage();
     char* str = (char*)calloc(sizeof(char), 100);
+    u8g.setFont(u8g_font_7x14);
     while(u8g.nextPage()){
         u8g.drawXBM(23, 19, DRUG_WATER_SCALE_XBM.width, DRUG_WATER_SCALE_XBM.height, DRUG_WATER_SCALE_XBM.value);
         sprintf(str, "%u", motor_scale_list[user.motor.scale]);
@@ -293,6 +294,7 @@ static void setScaleViewDraw(){
 //물약 장전 여부
 static void SelectLoadingDrugViewDraw(){
     u8g.firstPage();
+    u8g.setFont(u8g_font_7x14);
     while(u8g.nextPage()){
         u8g.drawXBM(36, 12, LOAD_DRUG_XBM.width, LOAD_DRUG_XBM.height, LOAD_DRUG_XBM.value);
         u8g.drawStr(86, 25, "?");
@@ -332,6 +334,7 @@ static void runningViewDraw(){
 static void injectionPerHourViewDraw(){
     u8g.firstPage();
     char* str = (char*)calloc(sizeof(char), 100);
+    u8g.setFont(u8g_font_7x14);
     while(u8g.nextPage()){
         u8g.drawXBM(32, 19, INJECTION_PER_HOUR_XBM.width, INJECTION_PER_HOUR_XBM.height, INJECTION_PER_HOUR_XBM.value);
         sprintf(str, "%u", user.motor.injectionPerHour);
@@ -343,6 +346,7 @@ static void injectionPerHourViewDraw(){
 //센서 선택
 static void selectSensorViewDraw(){
     u8g.firstPage();
+    u8g.setFont(u8g_font_7x14);
     char* str = (char*)calloc(sizeof(char), 100);
     while(u8g.nextPage()){
         u8g.drawXBM(23, 19, SELECT_SENSOR_TYPE_XBM.width, SELECT_SENSOR_TYPE_XBM.height, SELECT_SENSOR_TYPE_XBM.value);
@@ -354,6 +358,7 @@ static void selectSensorViewDraw(){
 
 static void setCurrentTimeViewDraw(){
     u8g.firstPage();
+    u8g.setFont(u8g_font_7x14);
     char* str = (char*)calloc(sizeof(char), 100);
     while(u8g.nextPage()){
         u8g.drawXBM(26, 12, SET_CURRENT_TIME_XBM.width, SET_CURRENT_TIME_XBM.height, SET_CURRENT_TIME_XBM.value);
