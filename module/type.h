@@ -87,9 +87,10 @@ const uint32_t motor_scale_list[] = {
 };
 
 typedef enum {
-    NOT_RUN,
-    RUN_BY_SCALE,
-    RUN_BY_INJECTION_PER_HOUR
+    NOT_DEFINED = 0,
+    NOT_RUN = 1,
+    RUN_BY_SCALE = 2,
+    RUN_BY_INJECTION_PER_HOUR = 3
 } motor_run_type_t;
 
 typedef struct {
@@ -219,7 +220,6 @@ typedef struct {
         uint32_t injectionPerHour;
         uint32_t scale;
     };
-    bool forceRun;
     uint8_t sensorType;
 } eeprom_setting_t;
 #endif  

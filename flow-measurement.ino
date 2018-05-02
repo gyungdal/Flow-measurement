@@ -154,6 +154,7 @@ void setup() {
     #ifdef DEBUG
         Serial.println("[START]");
     #endif
+
     user.sensor.sensorType = 0;
     user.sensor.pin = 3;
     
@@ -217,6 +218,22 @@ void setup() {
         pinMode(buttons[i].pin, INPUT);
     }
 
+    eeprom_setting_t* saveData = storage.readSetting();
+    if(saveData != nullptr){
+        #ifdef DEBUG 
+            Serial.println("Load Lastdata");
+            Serial.print("injectionPerHour : ");
+            Serial.println(saveData->injectionPerHour);
+            Serial.print("type : ");
+            Serial.println(saveData->type);
+            Serial.print("sensor Type : ");
+            Serial.println(saveData->sensorType);
+        #endif
+        user.motor.injectionPerHour = saveData->injectionPerHour;
+        user.motor.type = saveData->type;
+        user.sensor.sensorType = saveData->sensorType;
+        delete saveData;
+    }
     update();
     #ifdef DEBUG
         Serial.println("[DEBUG] DRAW SETUP");
@@ -451,6 +468,10 @@ void update(){
 }
 
 void loop() {  
+    eeprom_setting_t checker;
+    checker.sensorType = user.sensor.sensorType;
+    checker.type = user.motor.type;
+    checker.injectionPerHour = user.motor.injectionPerHour;
     display_menu_t beforePage = user.nowPage;
     for(uint8_t i = 0;i<sizeof(buttons) / sizeof(button_t);i++){
         int state = digitalRead(buttons[i].pin);
@@ -713,7 +734,7 @@ void loop() {
                                         user.nowPage = RUNNING_IN_MODE_VIEW;
                                         break;
                                     }
-                                    
+
                                     //날짜별 음수량
                                     case 2 : {
                                         user.nowPage = LOG_VIEW;
@@ -765,5 +786,15 @@ void loop() {
     }
     if(beforePage != user.nowPage){
         update();
+    }
+    if(checker.sensorType != user.sensor.sensorType |
+        checker.type != user.motor.type |
+        checker.injectionPerHour != user.motor.injectionPerHour){
+        eeprom_setting_t* saveData = new eeprom_setting_t;
+        saveData->injectionPerHour = user.motor.injectionPerHour;
+        saveData->type = user.motor.type;
+        saveData->sensorType = user.sensor.sensorType;
+        storage.saveSetting(saveData);
+        delete saveData;
     }
 }

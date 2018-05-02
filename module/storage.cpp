@@ -1,5 +1,6 @@
 #include "storage.h"
 
+#define DEBUG
 void Storage::clear(){
     #ifdef DEBUG
         Serial.println("[INFO] EEPROM Clear Start!");
@@ -29,11 +30,14 @@ void Storage::saveSetting(eeprom_setting_t* setting){
 
 eeprom_setting_t* Storage::readSetting(){
     auto eepromOffset = (EEPROM.length() - 1 - sizeof(eeprom_setting_t));
-    eeprom_setting_t* setting = new eeprom_setting_t;
+    if(EEPROM.read(eepromOffset) == 0){
+        return nullptr;
+    }
     uint8_t* serializeBytes = (uint8_t*)calloc(sizeof(uint8_t), sizeof(eeprom_setting_t));
     for(int i = 0;i<sizeof(eeprom_setting_t);i++){
         serializeBytes[i] = EEPROM.read((eepromOffset + i));
     }
+    eeprom_setting_t* setting = new eeprom_setting_t;
     memcpy(setting, serializeBytes, sizeof(eeprom_setting_t));
     delete[] serializeBytes;
     return setting;
