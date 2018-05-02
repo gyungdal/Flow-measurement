@@ -714,8 +714,16 @@ void loop() {
                                         break;
                                     }
                                     
+                                    //날짜별 음수량
+                                    case 2 : {
+                                        user.nowPage = LOG_VIEW;
+                                        user.mode = LOG_VIEW_MODE;
+                                        user.historyIndex = -1;
+                                        user.history = storage.get();
+                                        break;
+                                    }
+                                    
                                     //현재시간 설정
-                                    case 2 : 
                                     case 3 : {
                                         user.nowPage = SET_CURRENT_TIME_VIEW;
                                         user.mode = SET_CURRENT_TIME_MODE;
@@ -735,16 +743,6 @@ void loop() {
                                         break;
                                     }
                                     
-                                    /*
-                                    //날짜별 음수량
-                                    case 2 : {
-                                        user.nowPage = LOG_VIEW;
-                                        user.mode = LOG_VIEW_MODE;
-                                        user.historyIndex = -1;
-                                        user.history = storage.get();
-                                        break;
-                                    }
-                                    */
                                 }
                                 break;
                             }
