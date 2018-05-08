@@ -1,11 +1,37 @@
 #include "storage.h"
 
 #define DEBUG
+
+#ifdef TEST_EEPROM
+void Storage::testValue(){
+    eeprom_list_t* sample = new eeprom_list_t;
+    sample->length = 30;
+    sample->items = new eeprom_item_t[sample->length];
+    for(uint8_t i = 0;i<sample->length;i++){
+        eeprom_item_t* item = new eeprom_item_t;
+        item->index = i;
+        item->time.year = 2018;
+        item->time.month = 6;
+        
+        item->time.day = i + 1;
+        item->amount.liter = random(0, 3000);
+        item->amount.milliLiter = random(0, 1000);
+        memcpy(&sample->items[i], item, sizeof(eeprom_item_t));
+        delete item;
+    }
+    set(sample);
+    Serial.println("SAMPLE DONE");
+    delete[] sample->items;
+    delete sample;
+    Serial.println("EEPROM DONE");
+}        
+#endif
+
 void Storage::clear(){
     #ifdef DEBUG
         Serial.println("[INFO] EEPROM Clear Start!");
     #endif
-    for(int i = 0;i<EEPROM.length();i++){
+    for(uint16_t i = 0;i<EEPROM.length();i++){
         EEPROM.write(i, 0);
     }
     #ifdef DEBUG
@@ -66,9 +92,21 @@ void Storage::set(eeprom_list_t* data){
     for(uint8_t i = 0;i<data->length;i++){
         memcpy(&serializeBytes[(i * sizeof(eeprom_item_t)) + 1], &data->items[i], sizeof(eeprom_item_t));
     }
-    for(uint8_t i = 0;i<((sizeof(eeprom_item_t) * data->length) + sizeof(uint8_t));i++){
+    #ifdef DEBUG
+    Serial.print("[INFO] Memcpy Buffer");
+    Serial.println(bufferSize);
+    #endif
+    for(uint16_t i = 0;i<bufferSize;i++){
         EEPROM.write(i, serializeBytes[i]);
+        #ifdef DEBUG
+        Serial.print("[INFO] Write");
+        Serial.println(i);
+        #endif
     }
+    #ifdef DEBUG
+    Serial.print("[INFO] Write eeprom");
+    Serial.println(bufferSize);
+    #endif
     delete[] serializeBytes;
 }
 

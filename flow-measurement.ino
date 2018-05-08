@@ -151,6 +151,11 @@ static inline void sensorFirstPinInterrupt(){
 
 void setup() {
     Serial.begin(115200);
+
+    #ifdef TEST_EEPROM
+        storage.testValue();
+    #endif
+
     #ifdef DEBUG
         Serial.println("[START]");
     #endif
@@ -402,9 +407,8 @@ static inline void setCurrentTimeViewDraw(){
 }
 
 static inline void logViewDraw(){
-    u8g.drawXBM(32, 19, LOAD_DRUG_XBM.width, LOAD_DRUG_XBM.height, LOAD_DRUG_XBM.value);
-    u8g.drawXBM(84, 19, ING_XBM.width, ING_XBM.height, ING_XBM.value);
     u8g.drawXBM(40, 46, STOP_XBM.width, STOP_XBM.height, STOP_XBM.value);
+    u8g.drawXBM(84, 19, ING_XBM.width, ING_XBM.height, ING_XBM.value);
 }
 
 void update(){
@@ -693,6 +697,7 @@ void loop() {
                                         break;
                                     }
                                 }
+                                update();
                                 break;
                             }
                             case SET_SCALE_VIEW : {
