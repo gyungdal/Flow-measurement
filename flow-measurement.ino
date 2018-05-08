@@ -715,6 +715,10 @@ void loop() {
                                     }
                                     case TIME_DONE : {                                   
                                         timeSet(user.time.time);
+                                        user.time.index = TIME_YEAR;
+                                        user.nowPage = MAIN_VIEW;
+                                        //TODO : 시간 변경시 기록 삭제 여부
+                                        storage.clearHistory();
                                         break;
                                     }
                                 }
