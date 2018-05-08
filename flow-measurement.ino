@@ -359,39 +359,35 @@ static inline void selectSensorViewDraw(){
 
 static inline void setCurrentTimeViewDraw(){   
     Serial.println("Draw Current Time");
+
     #ifdef NOT_USE_RTC
     u8g.drawXBM(23, 12, SET_CURRENT_TIME_XBM.width, SET_CURRENT_TIME_XBM.height, SET_CURRENT_TIME_XBM.value);
     u8g.drawStr(64 - (u8g.getStrWidth("2018/05/02 13:49") / 2), 38, "2018/05/02 13:49");
     u8g.drawXBM(30, 38, SAVE_AFTER_SETTING_XBM.width, SAVE_AFTER_SETTING_XBM.height, SAVE_AFTER_SETTING_XBM.value);
-    
+
     #else
+
     char* str = (char*)calloc(sizeof(char), 100);
     u8g.drawXBM(23, 12, SET_CURRENT_TIME_XBM.width, SET_CURRENT_TIME_XBM.height, SET_CURRENT_TIME_XBM.value);
     sprintf(str, "%u/%u/%u %u:%u", user.time.time.year, user.time.time.month, user.time.time.day, 
                         user.time.time.hour, user.time.time.minute);
     Serial.println(str);
     u8g.drawStr(64 - (u8g.getStrWidth(str) / 2), 38, str);
+    const char* text[] = {
+        "Year",
+        "Month",
+        "Date",
+        "Hour",
+        "Minute"
+    };
     switch(user.time.index){
-        case TIME_YEAR : {
-            sprintf(str, "YEAR SETTING");
+        case TIME_YEAR : 
+        case TIME_MONTH : 
+        case TIME_DAY :
+        case TIME_HOUR : 
+        case TIME_MINUTE : 
+            sprintf(str, "Set %s", text[user.time.index]);
             break;
-        }
-        case TIME_MONTH : {
-            sprintf(str, "MONTH SETTING");
-            break;
-        }
-        case TIME_DAY : {
-            sprintf(str, "DAY SETTING");
-            break;
-        }
-        case TIME_HOUR : {
-            sprintf(str, "HOUR SETTING");
-            break;
-        }
-        case TIME_MINUTE : {
-            sprintf(str, "MINUTE SETTING");
-            break;
-        }
         case TIME_DONE : {
             u8g.drawXBM(30, 38, SAVE_AFTER_SETTING_XBM.width, SAVE_AFTER_SETTING_XBM.height, SAVE_AFTER_SETTING_XBM.value);
             break;
@@ -401,6 +397,7 @@ static inline void setCurrentTimeViewDraw(){
         u8g.drawStr(64 - (u8g.getStrWidth(str) / 2), 51, str);
     }
     delete[] str;
+
     #endif
 }
 
