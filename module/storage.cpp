@@ -12,7 +12,7 @@ void Storage::testValue(){
         eeprom_item_t* item = new eeprom_item_t;
         item->index = i;
         item->time.year = 2018;
-        item->time.month = 6;
+        item->time.month = random(1, 13);
         
         item->time.day = i + 1;
         item->amount.liter = random(0, 3000);

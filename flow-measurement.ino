@@ -673,7 +673,7 @@ void loop() {
                                 break;
                             }
                             case LOG_VIEW : {
-                                user.historyIndex += (user.historyIndex < (user.history->length - 2) ? 1 : 0);
+                                user.historyIndex += (user.historyIndex < (user.history->length - 3) ? 1 : 0);
                                 break;
                             }
                             default : {

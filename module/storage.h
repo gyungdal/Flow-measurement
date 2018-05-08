@@ -6,8 +6,6 @@
 
 #include "type.h"
 
-#define TEST_EEPROM 1
-
 class Storage{
     public:
         #ifdef TEST_EEPROM
