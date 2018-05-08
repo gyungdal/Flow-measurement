@@ -5,7 +5,7 @@
 #ifdef TEST_EEPROM
 void Storage::testValue(){
     eeprom_list_t* sample = new eeprom_list_t;
-    sample->length = 30;
+    sample->length = 2;
     sample->items = new eeprom_item_t[sample->length];
     for(uint8_t i = 0;i<sample->length;i++){
         eeprom_item_t* item = new eeprom_item_t;

@@ -412,8 +412,8 @@ static inline void logViewDraw(){
         Serial.print("[LOG] Line ");
         Serial.println(user.historyIndex);
     #endif
-    uint8_t allLine = user.history->length + 1;
-    uint8_t viewAreaMin = user.historyIndex + 1;
+    uint8_t allLine = user.history->length;
+    uint8_t viewAreaMin = user.historyIndex;
     uint8_t viewAreaMax = 
                 (viewAreaMin + 3 > user.history->length) 
                  ? user.history->length 
@@ -594,7 +594,7 @@ void loop() {
                             case LOG_VIEW : {
                                 user.nowPage = MAIN_VIEW;
                                 user.mode = NOTHING_MODE;
-                                user.historyIndex = -1;
+                                user.historyIndex = 0;
                                 delete user.history;
                                 break;
                             }
@@ -673,7 +673,7 @@ void loop() {
                                 break;
                             }
                             case LOG_VIEW : {
-                                user.historyIndex += (user.historyIndex < (user.history->length) ? 1 : 0);
+                                user.historyIndex += (user.historyIndex < (user.history->length - 2) ? 1 : 0);
                                 break;
                             }
                             default : {
@@ -762,7 +762,7 @@ void loop() {
                                     case 2 : {
                                         user.nowPage = LOG_VIEW;
                                         user.mode = LOG_VIEW_MODE;
-                                        user.historyIndex = -1;
+                                        user.historyIndex = 0;
                                         user.history = storage.get();
                                         break;
                                     }
