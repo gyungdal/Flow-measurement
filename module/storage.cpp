@@ -48,7 +48,7 @@ void Storage::saveSetting(eeprom_setting_t* setting){
         Serial.println(sizeof(eeprom_setting_t));
     #endif
     memcpy(serializeBytes, setting, sizeof(eeprom_setting_t));
-    for(auto i = 0;i < sizeof(eeprom_setting_t);i++){
+    for(uint16_t i = 0;i < sizeof(eeprom_setting_t);i++){
         EEPROM.write(i + eepromOffset, serializeBytes[i]);
     }
     delete[] serializeBytes;
@@ -60,7 +60,7 @@ eeprom_setting_t* Storage::readSetting(){
         return nullptr;
     }
     uint8_t* serializeBytes = (uint8_t*)calloc(sizeof(uint8_t), sizeof(eeprom_setting_t));
-    for(int i = 0;i<sizeof(eeprom_setting_t);i++){
+    for(uint16_t i = 0;i<sizeof(eeprom_setting_t);i++){
         serializeBytes[i] = EEPROM.read((eepromOffset + i));
     }
     eeprom_setting_t* setting = new eeprom_setting_t;
@@ -73,7 +73,7 @@ void Storage::clearHistory(){
     uint8_t length = EEPROM.read(0);
     EEPROM.write(0, 0);
     for(uint16_t i = 0;i<length;i++){
-        for(uint8_t j = 0;j<sizeof(eeprom_item_t);j++){
+        for(uint16_t j = 0;j<sizeof(eeprom_item_t);j++){
             EEPROM.write((sizeof(eeprom_item_t) * i) + j + 1, 0);
         }
     }
@@ -123,9 +123,9 @@ eeprom_list_t* Storage::get(){
     if(result->length != 0){
         result->items = new eeprom_item_t[result->length];
         uint8_t* buffer = new uint8_t[sizeof(eeprom_item_t)];
-        for(uint8_t i = 0;i<result->length;i++){
+        for(uint16_t i = 0;i<result->length;i++){
             memset(buffer, 0x00, sizeof(eeprom_item_t));
-            for(uint8_t j = 0;j<sizeof(eeprom_item_t);j++){
+            for(uint16_t j = 0;j<sizeof(eeprom_item_t);j++){
                 buffer[j] = EEPROM.read(((sizeof(eeprom_item_t) * i) + j + 1));
                 #ifdef DEBUG
                 bufferSize++;

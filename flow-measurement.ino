@@ -406,9 +406,30 @@ static inline void setCurrentTimeViewDraw(){
     #endif
 }
 
+//날짜별 음수량
 static inline void logViewDraw(){
-    u8g.drawXBM(40, 46, STOP_XBM.width, STOP_XBM.height, STOP_XBM.value);
-    u8g.drawXBM(84, 19, ING_XBM.width, ING_XBM.height, ING_XBM.value);
+    #ifdef DEBUG 
+        Serial.print("[LOG] Line ");
+        Serial.println(user.historyIndex);
+    #endif
+    uint8_t allLine = user.history->length + 1;
+    uint8_t viewAreaMin = user.historyIndex + 1;
+    uint8_t viewAreaMax = 
+                (viewAreaMin + 3 > user.history->length) 
+                 ? user.history->length 
+                 : viewAreaMin + 3;
+
+    char* str = (char*)calloc(sizeof(char), 100);
+    u8g.drawXBM(20, 6, BACK_PAGE_MODE_XBM.width, BACK_PAGE_MODE_XBM.height, BACK_PAGE_MODE_XBM.value);
+    
+    for(uint8_t i = viewAreaMin;i < viewAreaMax;i++){
+        memset(str, 0x00, sizeof(char) * 100);
+        sprintf(str, "%u/%u/%u : %uL", user.history->items[i].time.year, user.history->items[i].time.month, 
+                    user.history->items[i].time.day, user.history->items[i].amount.liter);
+        uint8_t areaOffset = (i - viewAreaMin);
+        u8g.drawStr(64 - (u8g.getStrWidth(str) / 2), (32 + (13 * areaOffset)), str);
+    }
+    delete[] str;
 }
 
 void update(){
