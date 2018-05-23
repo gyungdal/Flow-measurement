@@ -331,16 +331,21 @@ static inline void stopLoadingDrugViewDraw(){
 
 //~~모드로 동작
 static inline void runningViewDraw(){
+    Serial.println("TEST");
+    Serial.println((int)user.mode);
     xbm_t* list = new xbm_t[3];
     list[0] = INJECTION_PER_HOUR_XBM;
     list[1] = DRUG_WATER_SCALE_XBM;
     list[2] = MEASURE_ONLY_WATER_XBM;
-    u8g.drawXBM(0, 19, list[user.mode].width, list[user.mode].height, list[user.mode].value);
-    u8g.drawXBM(0, 32, RUNNING_IN_MODE_XBM.width, RUNNING_IN_MODE_XBM.height, RUNNING_IN_MODE_XBM.value);
-    user.nowPage = MAIN_VIEW;
-    user.mode = NOTHING_MODE;
+    u8g.firstPage();
+    while(u8g.nextPage()){
+        u8g.drawXBM(0, 19, list[user.mode].width, list[user.mode].height, list[user.mode].value);
+        u8g.drawXBM(0, 32, RUNNING_IN_MODE_XBM.width, RUNNING_IN_MODE_XBM.height, RUNNING_IN_MODE_XBM.value);
+    }
     delete[] list;
     delay(300);
+    user.nowPage = MAIN_VIEW;
+    user.mode = NOTHING_MODE;
     update();
 }
 
@@ -355,7 +360,6 @@ static inline void injectionPerHourViewDraw(){
 
 //센서 선택
 static inline void selectSensorViewDraw(){
-    
     char* str = (char*)calloc(sizeof(char), 100);
     u8g.drawXBM(23, 19, SELECT_SENSOR_TYPE_XBM.width, SELECT_SENSOR_TYPE_XBM.height, SELECT_SENSOR_TYPE_XBM.value);
     sprintf(str, "%u", user.sensor.sensorType);
@@ -413,19 +417,12 @@ static inline void logViewDraw(){
         Serial.print("[LOG] Line ");
         Serial.println(user.historyIndex);
     #endif
-    uint8_t allLine = user.history->length;
-    uint8_t viewAreaMin = user.historyIndex;
-    uint8_t viewAreaMax = 
-                (viewAreaMin + 3 > user.history->length) 
-                 ? user.history->length 
-                 : viewAreaMin + 3;
-
     char* str = (char*)calloc(sizeof(char), 100);
     u8g.drawXBM(20, 6, BACK_PAGE_MODE_XBM.width, BACK_PAGE_MODE_XBM.height, BACK_PAGE_MODE_XBM.value);
     
     for(uint8_t i = viewAreaMin;i < viewAreaMax;i++){
         memset(str, 0x00, sizeof(char) * 100);
-        sprintf(str, "%2u/%u/%u : %uL", user.history->items[i].time.year, user.history->items[i].time.month, 
+        sprintf(str, "%u/%u/%u : %uL", user.history->items[i].time.year, user.history->items[i].time.month, 
                     user.history->items[i].time.day, user.history->items[i].amount.liter);
         uint8_t areaOffset = (i - viewAreaMin);
         u8g.drawStr(64 - (u8g.getStrWidth(str) / 2), (32 + (13 * areaOffset)), str);
