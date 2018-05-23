@@ -50,7 +50,6 @@ typedef struct {
     uint64_t liter;
     uint32_t tick;
     uint32_t waterPerHour;
-    uint64_t lastTime;
 
     inline void resetAmount(){
         liter = 0;

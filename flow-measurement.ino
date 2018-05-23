@@ -150,7 +150,7 @@ static inline void motorSecondPinInterrupt(){
 
 static inline void sensorFirstPinInterrupt(){
     Serial.println("TRIG");
-    user.senso;
+    user.sensor++;
 }
 
 void setup() {
@@ -216,8 +216,8 @@ void setup() {
             sensorFirstPinInterrupt, RISING);
             
     //1초 타이머 설정
-    //Timer1.initialize(1000000);
-    //Timer1.attachInterrupt(secondTimer);
+    Timer1.initialize(1000000);
+    Timer1.attachInterrupt(secondTimer);
 
 
     //현재 페이지 설정 (MAIN_VIEW)
@@ -275,10 +275,11 @@ static inline void mainViewDraw(){
     u8g.drawXBM(0, 45, SENSOR_XBM.width, SENSOR_XBM.height, SENSOR_XBM.value);
 
     memset(str, 0x00, 100);
-    sprintf(str, " : %dL/h", user.sensor.tick);
+    sprintf(str, " : %dL/h", user.sensor.waterPerHour);
     u8g.drawStr(24, 31, str);
     memset(str, 0x00, 100);
-    sprintf(str, " : %dL", user.sensor.liter);
+    liquid_amount_t amount = user.sensor.getAmount();
+    sprintf(str, " : %dL", amount.liter);
     u8g.drawStr(36, 44, str);
     memset(str, 0x00, 100);
     sprintf(str, " : %u", user.sensor.sensorType);
