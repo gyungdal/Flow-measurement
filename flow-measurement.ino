@@ -284,11 +284,11 @@ static inline void mainViewDraw(){
     u8g.drawXBM(0, 45, SENSOR_XBM.width, SENSOR_XBM.height, SENSOR_XBM.value);
 
     memset(str, 0x00, 100);
-    sprintf(str, " : %dL/h", user.sensor.waterPerHour);
+    sprintf(str, " : %uL/h", user.sensor.waterPerHour);
     u8g.drawStr(24, 31, str);
     memset(str, 0x00, 100);
     liquid_amount_t amount = user.sensor.getAmount();
-    sprintf(str, " : %dL", amount.liter);
+    sprintf(str, " : %uL", amount.liter);
     u8g.drawStr(36, 44, str);
     memset(str, 0x00, 100);
     sprintf(str, " : %u", user.sensor.sensorType);
