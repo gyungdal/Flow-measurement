@@ -131,6 +131,7 @@ static inline void secondTimer(){
 
     //1초당 시간당 유속량 계산
     liquid_amount_t nowAmount = user.sensor.getAmount();
+    #ifdef DEBUG
     Serial.print("Last");
     Serial.print(lastAmount.liter);
     Serial.print('.');
@@ -139,10 +140,14 @@ static inline void secondTimer(){
     Serial.print(nowAmount.liter);
     Serial.print('.');
     Serial.println(nowAmount.milliLiter);
+    #endif
+
     double liter = (nowAmount.liter - lastAmount.liter);
     liter += ((double)(nowAmount.milliLiter - lastAmount.milliLiter) / 1000.0);
     user.sensor.waterPerHour = (uint32_t)(liter * 3600);
+    #ifdef DEBUG
     Serial.println(user.sensor.waterPerHour);
+    #endif
     lastAmount = nowAmount;
     if(user.nowPage == MAIN_VIEW){
         update();
