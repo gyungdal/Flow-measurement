@@ -146,7 +146,8 @@ static inline void motorSecondPinInterrupt(){
 }
 
 static inline void sensorFirstPinInterrupt(){
-    sensor.tickHandler();
+    Serial.println("TRIG");
+    user.sensor++;
 }
 
 void setup() {
@@ -257,8 +258,8 @@ static inline void mainViewDraw(){
         }
         case RUN_BY_SCALE : {
             sprintf(str, " : 1/%d", motor_scale_list[user.motor.scale]);
-            u8g.drawStr(WATER_SCALE_XBM.width, 18, str);
-            u8g.drawXBM(0, 6, WATER_SCALE_XBM.width, WATER_SCALE_XBM.height, WATER_SCALE_XBM.value);
+            u8g.drawStr(WATER_SCALE_XBM.width, 13, str);
+            u8g.drawXBM(0, 0, WATER_SCALE_XBM.width, WATER_SCALE_XBM.height, WATER_SCALE_XBM.value);
             break;
         }
         case NOT_RUN : {
@@ -271,7 +272,7 @@ static inline void mainViewDraw(){
     u8g.drawXBM(0, 45, SENSOR_XBM.width, SENSOR_XBM.height, SENSOR_XBM.value);
 
     memset(str, 0x00, 100);
-    sprintf(str, " : %dL/h", user.sensor.waterPerHour);
+    sprintf(str, " : %dL/h", user.sensor.tick);
     u8g.drawStr(24, 31, str);
     memset(str, 0x00, 100);
     sprintf(str, " : %dL", user.sensor.liter);
@@ -424,7 +425,7 @@ static inline void logViewDraw(){
     
     for(uint8_t i = viewAreaMin;i < viewAreaMax;i++){
         memset(str, 0x00, sizeof(char) * 100);
-        sprintf(str, "%u/%u/%u : %uL", user.history->items[i].time.year, user.history->items[i].time.month, 
+        sprintf(str, "%2u/%u/%u : %uL", user.history->items[i].time.year, user.history->items[i].time.month, 
                     user.history->items[i].time.day, user.history->items[i].amount.liter);
         uint8_t areaOffset = (i - viewAreaMin);
         u8g.drawStr(64 - (u8g.getStrWidth(str) / 2), (32 + (13 * areaOffset)), str);

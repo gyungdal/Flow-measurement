@@ -7,4 +7,5 @@ void Sensor::begin(sensor_t* sensor){
 
 void Sensor::tickHandler(){
     this->sensor++;
+    
 }

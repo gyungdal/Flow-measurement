@@ -1,6 +1,7 @@
 #include "motor.h"
 #include <Arduino.h>
 
+static const int maxTick = 3242U;
 void Motor::begin(motor_t* motor){
     this->motor = motor;
 
@@ -12,7 +13,7 @@ void Motor::begin(motor_t* motor){
     }
 }
 
-void Motor::run(){
+void Motor::run(uint32_t value){
     analogWrite(this->motor->pwmPin, 255);
 }
 
