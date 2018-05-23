@@ -110,7 +110,7 @@ static inline void dayHandler(){
     delete list;
 }
 
-static liquid_amount_t lastAmount;
+liquid_amount_t lastAmount;
 
 static inline void secondTimer(){
     //모터에서 몇초간 신호가 오지 않았는지 계산
@@ -131,9 +131,18 @@ static inline void secondTimer(){
 
     //1초당 시간당 유속량 계산
     liquid_amount_t nowAmount = user.sensor.getAmount();
+    Serial.print("Last");
+    Serial.print(lastAmount.liter);
+    Serial.print('.');
+    Serial.println(lastAmount.milliLiter);
+    Serial.print("Now");
+    Serial.print(nowAmount.liter);
+    Serial.print('.');
+    Serial.println(nowAmount.milliLiter);
     double liter = (nowAmount.liter - lastAmount.liter);
     liter += ((double)(nowAmount.milliLiter - lastAmount.milliLiter) / 1000.0);
     user.sensor.waterPerHour = (uint32_t)(liter * 3600);
+    Serial.println(user.sensor.waterPerHour);
     lastAmount = nowAmount;
     if(user.nowPage == MAIN_VIEW){
         update();

@@ -40,7 +40,7 @@ typedef struct {
 
 //센서별 리터당 틱
 static const int sensor_tick[] = {   
-    0, 0, 0, 0, 0, 0, 0  
+    18, 8, 5, 1, 1, 1, 1
 };
 
 //sensor data
