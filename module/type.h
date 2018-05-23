@@ -51,7 +51,7 @@ typedef struct {
     uint32_t tick;
     uint32_t waterPerHour;
     uint64_t lastTime;
-    
+
     inline void resetAmount(){
         liter = 0;
         tick = 0;
@@ -64,7 +64,7 @@ typedef struct {
         return result;
     }
 
-    inline void operator++(){
+    void operator++(){
         tick++;
         if(tick == sensor_tick[sensorType]){
             liter++;
