@@ -163,7 +163,6 @@ static inline void motorSecondPinInterrupt(){
 }
 
 static inline void sensorFirstPinInterrupt(){
-    Serial.println("TRIG");
     user.sensor++;
 }
 
@@ -349,8 +348,10 @@ static inline void stopLoadingDrugViewDraw(){
 
 //~~모드로 동작
 static inline void runningViewDraw(){
-    Serial.println("TEST");
+    #ifdef DEBUG
+    Serial.print("[MODE]");
     Serial.println((int)user.mode);
+    #endif
     xbm_t* list = new xbm_t[3];
     list[0] = INJECTION_PER_HOUR_XBM;
     list[1] = DRUG_WATER_SCALE_XBM;
@@ -386,7 +387,9 @@ static inline void selectSensorViewDraw(){
 }
 
 static inline void setCurrentTimeViewDraw(){   
+    #ifdef DEBUG
     Serial.println("Draw Current Time");
+    #endif
 
     #ifdef NOT_USE_RTC
     u8g.drawXBM(23, 12, SET_CURRENT_TIME_XBM.width, SET_CURRENT_TIME_XBM.height, SET_CURRENT_TIME_XBM.value);
@@ -399,7 +402,11 @@ static inline void setCurrentTimeViewDraw(){
     u8g.drawXBM(23, 12, SET_CURRENT_TIME_XBM.width, SET_CURRENT_TIME_XBM.height, SET_CURRENT_TIME_XBM.value);
     sprintf(str, "%u/%u/%u %u:%u", user.time.time.year, user.time.time.month, user.time.time.day, 
                         user.time.time.hour, user.time.time.minute);
+                    
+    #ifdef DEBUG
     Serial.println(str);
+    #endif
+
     u8g.drawStr(64 - (u8g.getStrWidth(str) / 2), 38, str);
     const char* text[] = {
         "Year",
@@ -760,8 +767,11 @@ void loop() {
                                 break;
                             }
                             case MODE_VIEW : {
+                                #ifdef DEBUG
                                 Serial.print("[index]");
                                 Serial.println(user.nowIndex);
+                                #endif
+                                
                                 switch(user.nowIndex){
 
                                     //시간당 주입
