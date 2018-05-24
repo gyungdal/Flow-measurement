@@ -369,7 +369,7 @@ static inline void runningViewDraw(){
 static inline void injectionPerHourViewDraw(){
     char* str = (char*)calloc(sizeof(char), 100);
     u8g.drawXBM(32, 19, INJECTION_PER_HOUR_XBM.width, INJECTION_PER_HOUR_XBM.height, INJECTION_PER_HOUR_XBM.value);
-    sprintf(str, "%u", user.motor.injectionPerHour);
+    sprintf(str, "%u", user.motor.injectionPerHour + 1);
     u8g.drawStr(64 - (u8g.getStrWidth(str) / 2), 46, str);
     delete[] str;
 }
