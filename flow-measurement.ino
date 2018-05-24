@@ -6,7 +6,6 @@
 #include "module/korean.h"
 #include "module/type.h"
 #include "module/storage.cpp"
-#include "module/sensor.cpp"
 #include "module/motor.cpp"
 
 #define DEBUG 1
@@ -33,7 +32,6 @@ const int RTC_PIN = 2;
 DS3231 clock;
 
 Storage storage;
-Sensor sensor;
 Motor motor;
 
 user_t user;
@@ -190,10 +188,6 @@ void setup() {
     user.motor.sigPin[0] = 18;
     user.motor.sigPin[1] = 19;
 
-    sensor.begin(&user.sensor);
-    #ifdef DEBUG
-      Serial.println("[BEGIN] Sensor");
-    #endif
     motor.begin(&user.motor);
     #ifdef DEBUG
       Serial.println("[BEGIN] Motor");
@@ -217,6 +211,9 @@ void setup() {
     pinMode(user.motor.sigPin[0], INPUT_PULLUP);
     pinMode(user.motor.sigPin[1], INPUT_PULLUP);
     pinMode(user.sensor.pin, INPUT_PULLUP);
+    #ifdef DEBUG
+      Serial.println("[BEGIN] Sensor");
+    #endif
     
     //RTC에서 오는 1일 마다 발생하는 타이머 설정 
     attachInterrupt(digitalPinToInterrupt(RTC_PIN), 
