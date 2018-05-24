@@ -845,8 +845,8 @@ void loop() {
         update();
     }
     if(checker.sensorType != user.sensor.sensorType |
-        checker.type != user.motor.type |
-        checker.injectionPerHour != user.motor.injectionPerHour){
+            checker.type != user.motor.type |
+            checker.injectionPerHour != user.motor.injectionPerHour){
         eeprom_setting_t* saveData = new eeprom_setting_t;
         saveData->injectionPerHour = user.motor.injectionPerHour;
         saveData->type = user.motor.type;
