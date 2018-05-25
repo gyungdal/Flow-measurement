@@ -1,0 +1,12 @@
+language: cpp
+sudo: false
+before_install:
+  - source <(curl -SLs https://raw.githubusercontent.com/adafruit/travis-ci-arduino/master/install.sh)
+install:
+  - arduino --install-library "u8glib","TimerOne","Arduino-DS3231"
+script:
+  - build_platform mega2560
+notifications:
+  email:
+    on_success: change
+    on_failure: change
