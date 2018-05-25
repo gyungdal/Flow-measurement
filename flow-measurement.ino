@@ -599,8 +599,10 @@ void loop() {
                                 break;
                             }
                             case INJECTION_PER_HOUR_VIEW : {
-                                if(user.motor.injectionPerHour < 5000)
-                                    user.motor.injectionPerHour += 10;
+                                user.motor.injectionPerHour += 10;
+                                if(user.motor.injectionPerHour > 5000){
+                                    user.motor.injectionPerHour = 0;
+                                }
                                 break;
                             }
                             case LOG_VIEW : {
@@ -688,8 +690,10 @@ void loop() {
                                 break;
                             }
                             case INJECTION_PER_HOUR_VIEW : {
-                                if(user.motor.injectionPerHour > 0)
-                                    user.motor.injectionPerHour -= 10;
+                                user.motor.injectionPerHour -= 10;
+                                if(user.motor.injectionPerHour < 0){
+                                    user.motor.injectionPerHour = 5000;
+                                }
                                 break;
                             }
                             case CLEAR_COUNT_VIEW : {
