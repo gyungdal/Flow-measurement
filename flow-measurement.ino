@@ -10,6 +10,7 @@
 
 #define DEBUG 1
 
+
 /*
     U8GLIB_ST7920_128X64_1X(sck, mosi, cs [, reset])
     Serial mode (PSB = LOW)
@@ -215,16 +216,18 @@ void setup() {
       Serial.println("[BEGIN] Sensor");
     #endif
     
+    /*
     //RTC에서 오는 1일 마다 발생하는 타이머 설정 
     attachInterrupt(digitalPinToInterrupt(RTC_PIN), 
             dayHandler, RISING);
-    attachInterrupt(digitalPinToInterrupt(user.motor.sigPin[0]), 
+     * attachInterrupt(digitalPinToInterrupt(user.motor.sigPin[0]), 
             motorFirstPinInterrupt, RISING);
-    attachInterrupt(digitalPinToInterrupt(user.motor.sigPin[1]), 
+      attachInterrupt(digitalPinToInterrupt(user.motor.sigPin[1]), 
             motorSecondPinInterrupt, RISING);
-    attachInterrupt(digitalPinToInterrupt(user.sensor.pin), 
+      attachInterrupt(digitalPinToInterrupt(user.sensor.pin), 
             sensorFirstPinInterrupt, RISING);
-            
+            */
+          
     //1초 타이머 설정
     Timer1.initialize(1000000);
     Timer1.attachInterrupt(secondTimer);
@@ -253,6 +256,7 @@ void setup() {
         user.sensor.sensorType = saveData->sensorType;
         delete saveData;
     }
+    Serial.println("Read Success");
     update();
     #ifdef DEBUG
         Serial.println("[DEBUG] DRAW SETUP");
@@ -524,9 +528,10 @@ void loop() {
         if(state != buttons[i].lastState){
             if(buttons[i].lastState != LOW){
                 uint64_t diffTime = millis() - buttons[i].lastTime;
-                if(diffTime < 120)
+                /*if(diffTime < 120)
                     continue;
-                #ifdef DEBUG
+                */
+               #ifdef DEBUG
                     Serial.print("[PUSH] ");
                     Serial.print(buttons[i].pin);
                     Serial.print(" : ");

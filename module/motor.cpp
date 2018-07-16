@@ -6,7 +6,7 @@ void Motor::begin(motor_t* motor){
     this->motor = motor;
 
     pinMode(this->motor->pwmPin, OUTPUT);
-    analogWrite(this->motor->pwmPin, 0);
+    release();
 
     for(uint8_t i = 0;i<2;i++){
         pinMode(this->motor->sigPin[i], INPUT_PULLUP);
@@ -14,11 +14,11 @@ void Motor::begin(motor_t* motor){
 }
 
 void Motor::run(uint32_t value){
-    analogWrite(this->motor->pwmPin, 255);
+    digitalWrite(this->motor->pwmPin, LOW);
 }
 
 void Motor::release(){
-    analogWrite(this->motor->pwmPin, 0);
+    digitalWrite(this->motor->pwmPin, HIGH);
 }
 
 void Motor::firstTick(){
